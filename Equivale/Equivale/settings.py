@@ -40,20 +40,20 @@ INSTALLED_APPS = [
 
     #Aplicaciones instaladas
     'cuentas',
-    #RestFramwork apis
+    #RestFramwork
     'rest_framework',
     'rest_framework.authtoken',
+    #OAuth
+    'social_django'
 ]
 
 AUTH_USER_MODEL = 'cuentas.Usuario'
 
 REST_FRAMEWORK = {
-    # Clases de autenticación que se utilizarán para autenticar a los usuarios.
-    # Aquí, se utiliza la autenticación basada en tokens.
+    # Clases de autenticación que se utilizarán para autenticar a los usuarios basado en tokens.
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
     ),
-    
     # Clases de permisos que se aplicarán a las vistas de la API.
     # Aquí, se especifica que solo los usuarios autenticados podrán acceder a las vistas.
     'DEFAULT_PERMISSION_CLASSES': (
@@ -69,6 +69,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    #OAuth
+    'social_django.middleware.SocialAuthExceptionMiddleware',
 ]
 
 ROOT_URLCONF = 'Equivale.urls'
@@ -84,6 +86,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                #OAuth
+                'social_django.context_processors.backends',
             ],
         },
     },
@@ -148,3 +152,26 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+#OAuth APP settings custom
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    #OAuth GITHUB
+    'social_core.backends.github.GithubOAuth2',
+    #OAuth Google
+    'social_core.backends.google.GoogleOAuth2',
+]
+
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/cuentas/login/'
+LOGOUT_URL = 'registro'
+LOGOUT_REDIRECT_URL = 'login'
+
+#OAuth GITHUB
+SOCIAL_AUTH_GITHUB_KEY = ''
+SOCIAL_AUTH_GITHUB_SECRET = ''
+
+#OAuth Google
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = ''
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = ''
