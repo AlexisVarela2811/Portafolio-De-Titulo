@@ -163,8 +163,8 @@ AUTHENTICATION_BACKENDS = [
     'social_core.backends.google.GoogleOAuth2',
 ]
 
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/cuentas/login/'
+LOGIN_URL = '/cuentas/login/'
+LOGIN_REDIRECT_URL = '/cuentas/registro/'
 LOGOUT_URL = 'registro'
 LOGOUT_REDIRECT_URL = 'login'
 
