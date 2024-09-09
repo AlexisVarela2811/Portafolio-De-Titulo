@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cierre de sesión</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Has cerrado sesión exitosamente</h1>
+        <p>Redirigiendo al inicio de sesión en 3 segundos...</p>
+        <p>Si no eres redirigido automáticamente, <a id="redirect-link" href="{% url 'cuentas:login' %}">haz clic aquí</a>.</p>
+    </div>
+    <script>
+        setTimeout(function() {
+            window.location.href = "{% url 'cuentas:login' %}";
+        }, 3000);
+    </script>
+</body>
+</html>

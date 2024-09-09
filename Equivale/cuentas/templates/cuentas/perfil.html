@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<form method="POST">
+    {% csrf_token %}
+    <h2>Información de Perfil</h2>
+    {{ perfil_form.as_p }}
+    <h2>Dirección</h2>
+    {{ direccion_form.as_p }}
+    <button type="submit">Actualizar</button>
+</form>
+
+</body>
+</html>

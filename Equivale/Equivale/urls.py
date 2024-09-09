@@ -20,7 +20,7 @@ from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('cuentas/', include(('cuentas.urls', 'cuentas'), namespace='cuentas')),
+    path('cuentas/', include(('cuentas.urls','cuentas'), namespace='cuentas')),
     #??
     path('social-auth/', include('social_django.urls', namespace='social'))
 ]

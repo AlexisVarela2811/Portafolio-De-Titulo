@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     #OAuth
-    'social_django'
+    'social_django',
 ]
 
 AUTH_USER_MODEL = 'cuentas.Usuario'
@@ -157,6 +157,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #OAuth APP settings custom
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
+
     #OAuth GITHUB
     'social_core.backends.github.GithubOAuth2',
     #OAuth Google
@@ -164,9 +165,10 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 LOGIN_URL = '/cuentas/login/'
-LOGIN_REDIRECT_URL = '/cuentas/registro/'
-LOGOUT_URL = 'registro'
-LOGOUT_REDIRECT_URL = 'login'
+LOGIN_REDIRECT_URL = '/cuentas/perfil'  
+LOGOUT_URL = '/cuentas/logout/'
+LOGOUT_REDIRECT_URL = '/cuentas/login/'  
+
 
 #OAuth GITHUB
 SOCIAL_AUTH_GITHUB_KEY = ''
@@ -175,3 +177,17 @@ SOCIAL_AUTH_GITHUB_SECRET = ''
 #OAuth Google
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = ''
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = ''
+
+
+SOCIAL_AUTH_PIPELINE = [
+    'social_core.pipeline.social_auth.social_details',  
+    'social_core.pipeline.social_auth.social_uid',  
+    'social_core.pipeline.social_auth.auth_allowed',  
+    'social_core.pipeline.social_auth.social_user',
+    'social_core.pipeline.user.get_username',  
+    'social_core.pipeline.social_auth.associate_by_email',  
+    'social_core.pipeline.social_auth.associate_user',  
+    'social_core.pipeline.social_auth.load_extra_data',  
+    'social_core.pipeline.user.user_details',  
+    'cuentas.pipelines.save_user_from_oauth',  
+]

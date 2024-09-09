@@ -1,15 +1,14 @@
-# forms.py
 from django import forms
 from django.contrib.auth import authenticate
-from .models import Usuario
+from django.contrib.auth import get_user_model
+from .models import Usuario, Direccion, Comuna
 
 class RegistroForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput, label="Contraseña")
     confirm_password = forms.CharField(widget=forms.PasswordInput, label="Confirmar Contraseña")
-
     class Meta:
-        model = Usuario
-        fields = ['nombre', 'correo', 'password']
+        model = get_user_model()
+        fields = ['nombre', 'email', 'password'] 
 
     def clean(self):
         cleaned_data = super().clean()
@@ -27,15 +26,31 @@ class RegistroForm(forms.ModelForm):
         return user
 
 class LoginForm(forms.Form):
-    correo = forms.EmailField(label="Correo electrónico")
+    email = forms.EmailField(label="Email")  
     password = forms.CharField(widget=forms.PasswordInput, label="Contraseña")
 
     def clean(self):
         cleaned_data = super().clean()
-        correo = cleaned_data.get('correo')
+        email = cleaned_data.get('email')  
         password = cleaned_data.get('password')
-        if correo and password:
-            user = authenticate(correo=correo, password=password)
+        if email and password:
+            user = authenticate(email=email, password=password)  
             if user is None:
                 raise forms.ValidationError('Credenciales incorrectas.')
         return cleaned_data
+
+class PerfilForm(forms.ModelForm):
+    class Meta:
+        model = Usuario
+        fields = ['nombre', 'email']  
+        widgets = {
+            'email': forms.EmailInput(attrs={'readonly': 'readonly'}), 
+        }
+
+class DireccionForm(forms.ModelForm):
+    class Meta:
+        model = Direccion
+        fields = ['direccion', 'comuna']
+
+    comuna = forms.ModelChoiceField(queryset=Comuna.objects.all(), label='Comuna')
+

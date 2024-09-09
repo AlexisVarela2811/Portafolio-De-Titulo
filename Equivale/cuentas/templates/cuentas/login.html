@@ -16,6 +16,8 @@
                 <p>{{ message }}</p>
             {% endfor %}
         {% endif %}
+        <a href="{% url 'social:begin' 'github' %}">Iniciar con GitHub</a>
+        <a href="{% url 'social:begin' 'google-oauth2' %}">Iniciar sesión con Google</a>
     </div>
 </body>
 </html>
