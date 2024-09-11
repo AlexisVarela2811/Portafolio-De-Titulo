@@ -189,5 +189,7 @@ SOCIAL_AUTH_PIPELINE = [
     'social_core.pipeline.social_auth.associate_user',  
     'social_core.pipeline.social_auth.load_extra_data',  
     'social_core.pipeline.user.user_details',  
-    'cuentas.pipelines.save_user_from_oauth',  
+    'cuentas.pipelines.save_user_from_oauth',
 ]
+
+SOCIAL_AUTH_GITHUB_SCOPE = ['user:email']
