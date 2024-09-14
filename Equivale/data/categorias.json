@@ -1,0 +1,220 @@
+[
+    {
+        "nombre": "Electrónica",
+        "descripcion": "Dispositivos electrónicos y accesorios.",
+        "subcategorias": [
+            {
+                "nombre": "Teléfonos y Accesorios",
+                "subcategorias": [
+                    {"nombre": "Teléfonos Móviles"},
+                    {"nombre": "Accesorios para Teléfonos"}
+                ]
+            },
+            {
+                "nombre": "Computadoras y Periféricos",
+                "subcategorias": [
+                    {"nombre": "Computadoras Portátiles"},
+                    {"nombre": "Computadoras de Escritorio"},
+                    {"nombre": "Monitores"},
+                    {"nombre": "Teclados y Ratones"}
+                ]
+            },
+            {
+                "nombre": "Electrodomésticos",
+                "subcategorias": [
+                    {"nombre": "Refrigeradores"},
+                    {"nombre": "Lavadoras"},
+                    {"nombre": "Microondas"}
+                ]
+            },
+            {
+                "nombre": "Televisores y Audio",
+                "subcategorias": [
+                    {"nombre": "Televisores"},
+                    {"nombre": "Sistemas de Audio"},
+                    {"nombre": "Accesorios para Televisores"}
+                ]
+            }
+        ]
+    },
+    {
+        "nombre": "Hogar y Muebles",
+        "descripcion": "Muebles y artículos para el hogar.",
+        "subcategorias": [
+            {
+                "nombre": "Muebles",
+                "subcategorias": [
+                    {"nombre": "Sofás"},
+                    {"nombre": "Mesas"},
+                    {"nombre": "Sillas"}
+                ]
+            },
+            {
+                "nombre": "Decoración",
+                "subcategorias": [
+                    {"nombre": "Cortinas"},
+                    {"nombre": "Alfombras"},
+                    {"nombre": "Cuadros y Posters"}
+                ]
+            },
+            {
+                "nombre": "Electrodomésticos de Cocina",
+                "subcategorias": [
+                    {"nombre": "Tostadoras"},
+                    {"nombre": "Cafeteras"},
+                    {"nombre": "Batidoras"}
+                ]
+            }
+        ]
+    },
+    {
+        "nombre": "Moda",
+        "descripcion": "Ropa y accesorios de moda.",
+        "subcategorias": [
+            {
+                "nombre": "Hombres",
+                "subcategorias": [
+                    {"nombre": "Camisas"},
+                    {"nombre": "Pantalones"},
+                    {"nombre": "Chaquetas"}
+                ]
+            },
+            {
+                "nombre": "Mujeres",
+                "subcategorias": [
+                    {"nombre": "Vestidos"},
+                    {"nombre": "Faldas"},
+                    {"nombre": "Blusas"}
+                ]
+            },
+            {
+                "nombre": "Accesorios",
+                "subcategorias": [
+                    {"nombre": "Bolsos"},
+                    {"nombre": "Joyería"},
+                    {"nombre": "Gafas de Sol"}
+                ]
+            }
+        ]
+    },
+    {
+        "nombre": "Deportes y Fitness",
+        "descripcion": "Equipo y ropa para deportes y actividades físicas.",
+        "subcategorias": [
+            {
+                "nombre": "Ropa Deportiva",
+                "subcategorias": [
+                    {"nombre": "Camisetas"},
+                    {"nombre": "Pantalones"},
+                    {"nombre": "Chaquetas"}
+                ]
+            },
+            {
+                "nombre": "Equipos Deportivos",
+                "subcategorias": [
+                    {"nombre": "Pelotas"},
+                    {"nombre": "Raquetas"},
+                    {"nombre": "Cuerdas para Escalada"}
+                ]
+            },
+            {
+                "nombre": "Accesorios de Fitness",
+                "subcategorias": [
+                    {"nombre": "Pesas"},
+                    {"nombre": "Bandas de Resistencia"},
+                    {"nombre": "Relojes de Fitness"}
+                ]
+            }
+        ]
+    },
+    {
+        "nombre": "Juguetes",
+        "descripcion": "Juguetes y juegos para niños.",
+        "subcategorias": [
+            {
+                "nombre": "Juguetes Educativos",
+                "subcategorias": [
+                    {"nombre": "Bloques de Construcción"},
+                    {"nombre": "Rompecabezas"},
+                    {"nombre": "Juguetes de Ciencia"}
+                ]
+            },
+            {
+                "nombre": "Juguetes de Acción",
+                "subcategorias": [
+                    {"nombre": "Figuras de Acción"},
+                    {"nombre": "Vehículos de Juguete"},
+                    {"nombre": "Disfraces"}
+                ]
+            },
+            {
+                "nombre": "Juguetes para Bebés",
+                "subcategorias": [
+                    {"nombre": "Peluches"},
+                    {"nombre": "Juguetes de Dentición"},
+                    {"nombre": "Móviles para Cuna"}
+                ]
+            }
+        ]
+    },
+    {
+        "nombre": "Salud y Belleza",
+        "descripcion": "Productos para el cuidado personal y la belleza.",
+        "subcategorias": [
+            {
+                "nombre": "Cuidado de la Piel",
+                "subcategorias": [
+                    {"nombre": "Hidratantes"},
+                    {"nombre": "Exfoliantes"},
+                    {"nombre": "Sérums"}
+                ]
+            },
+            {
+                "nombre": "Cuidado del Cabello",
+                "subcategorias": [
+                    {"nombre": "Champús"},
+                    {"nombre": "Acondicionadores"},
+                    {"nombre": "Tratamientos Capilares"}
+                ]
+            },
+            {
+                "nombre": "Maquillaje",
+                "subcategorias": [
+                    {"nombre": "Bases"},
+                    {"nombre": "Sombras de Ojos"},
+                    {"nombre": "Labiales"}
+                ]
+            }
+        ]
+    },
+    {
+        "nombre": "Automotriz",
+        "descripcion": "Accesorios y repuestos para automóviles.",
+        "subcategorias": [
+            {
+                "nombre": "Repuestos",
+                "subcategorias": [
+                    {"nombre": "Frenos"},
+                    {"nombre": "Filtros"},
+                    {"nombre": "Baterías"}
+                ]
+            },
+            {
+                "nombre": "Accesorios",
+                "subcategorias": [
+                    {"nombre": "Alfombras"},
+                    {"nombre": "Cargadores para Coche"},
+                    {"nombre": "Porta Equipajes"}
+                ]
+            },
+            {
+                "nombre": "Herramientas",
+                "subcategorias": [
+                    {"nombre": "Llaves Inglesas"},
+                    {"nombre": "Destornilladores"},
+                    {"nombre": "Gatos Hidráulicos"}
+                ]
+            }
+        ]
+    }
+]
