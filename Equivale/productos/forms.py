@@ -4,7 +4,7 @@ from .models import Producto, Categoria
 class ProductoForm(forms.ModelForm):
     class Meta:
         model = Producto
-        fields = ['nombre', 'descripcion', 'precio', 'stock', 'imagen', 'categoria', 'subcategoria']
+        fields = ['nombre', 'marca', 'descripcion', 'precio', 'stock', 'imagen', 'categoria', 'subcategoria']
     
     subcategoria = forms.ModelChoiceField(queryset=Categoria.objects.none(), required=False)
 
@@ -26,3 +26,5 @@ class ProductoForm(forms.ModelForm):
             else:
                 self.fields['subcategoria'].queryset = Categoria.objects.none()
 
+class SearchForm(forms.Form):
+    query = forms.CharField(max_length=100, required=False, label='Buscar productos')

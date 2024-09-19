@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Buscar Productos - Mercado Equivale</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Buscar Productos</h2>
+        <form method="get" action="{% url 'productos:buscar_productos' %}">
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Buscar</button>
+        </form>
+
+        {% if productos %}
+            <h3>Resultados de búsqueda</h3>
+            <ul class="list-group mt-3">
+                {% for producto in productos %}
+                    <li class="list-group-item">
+                        <a href="{% url 'productos:detalle_producto' producto.id %}">{{ producto.nombre }}</a> - ${{ producto.precio }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No se encontraron productos.</p>
+        {% endif %}
+    </div>
+
+    <!-- Scripts de JavaScript (Bootstrap) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
