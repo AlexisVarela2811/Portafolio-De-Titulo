@@ -1,0 +1,26 @@
+[
+    {
+        "nombre": "Araucaria",
+        "descripcion": "Árbol emblemático de Chile, conocido como 'pehuén', con hojas en forma de aguja."
+    },
+    {
+        "nombre": "Lenga",
+        "descripcion": "Árbol de la Patagonia, apreciado por su madera y su belleza en el paisaje."
+    },
+    {
+        "nombre": "Coihue",
+        "descripcion": "Árbol robusto que crece en el sur de Chile, con un tronco recto y hojas perennes."
+    },
+    {
+        "nombre": "Alerce",
+        "descripcion": "Uno de los árboles más longevos del mundo, con una madera muy resistente."
+    },
+    {
+        "nombre": "Quillay",
+        "descripcion": "Árbol pequeño a mediano, conocido por su corteza y sus propiedades medicinales."
+    },
+    {
+        "nombre": "Boldo",
+        "descripcion": "Árbol característico de la zona central, famoso por sus hojas aromáticas y medicinales."
+    }
+]

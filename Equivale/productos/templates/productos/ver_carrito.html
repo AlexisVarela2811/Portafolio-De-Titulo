@@ -1,13 +1,11 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Mi Carrito - Mercado Equivale</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <title>Mi Carrito Equivale</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-
     <div class="container mt-4">
         <h2>Mi Carrito</h2>
         {% if carrito_items %}
@@ -29,16 +27,16 @@
                             <td>{{ cp.producto.nombre }}</td>
                             <td>${{ cp.producto.precio }}</td>
                             <td>
-                                <form action="{% url 'productos:actualizar_cantidad' cp.id %}" method="post" style="display:inline;">
+                                <form action="{% url 'productos:actualizar_cantidad' cp.id %}" method="post" class="actualizar-cantidad-form" style="display:inline;">
                                     {% csrf_token %}
                                     <div class="input-group">
-                                        <button class="btn btn-outline-secondary" type="submit" name="action" value="decrease">-</button>
-                                        <input type="number" class="form-control" name="cantidad" value="{{ cp.cantidad }}" style="width: 1px;">
-                                        <button class="btn btn-outline-secondary" type="submit" name="action" value="increase">+</button>
+                                        <button class="btn btn-outline-secondary btn-decrease" type="button" data-id="{{ cp.id }}">-</button>
+                                        <input type="number" class="form-control cantidad-input" name="cantidad" value="{{ cp.cantidad }}" style="width: 50px;" disabled>
+                                        <button class="btn btn-outline-secondary btn-increase" type="button" data-id="{{ cp.id }}">+</button>
                                     </div>
                                 </form>
                             </td>
-                            <td>${{ cp.total_precio }}</td>
+                            <td class="total-producto" data-id="{{ cp.id }}">$<span id="total-producto-{{ cp.id }}">{{ cp.total_producto }}</span></td>
                             <td>
                                 <form action="{% url 'productos:eliminar_item_carrito' cp.id %}" method="post" style="display:inline;">
                                     {% csrf_token %}
@@ -49,17 +47,173 @@
                     {% endfor %}
                 </tbody>
             </table>
-            <h3>Total Carrito: ${{ total_carrito }}</h3>
-            <a href="#" class="btn btn-primary">Proceder a la Compra</a>
+            
+            <h4>Método de Entrega</h4>
+            <form method="post" action="#">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="metodo_entrega" class="form-label">Seleccionar Método de Entrega</label>
+                    <select class="form-select" name="metodo_entrega" id="metodo_entrega">
+                        {% for metodo in metodos_entrega %}
+                            <option value="{{ metodo.id }}" data-costo="{{ metodo.costo }}">
+                                {{ metodo.nombre }} - {{ metodo.tiempo_estimado }} días - ${{ metodo.costo }} - {{ metodo.descripcion }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <h4>Opciones de Donación</h4>
+                <div class="mb-3">
+                    <label for="porcentaje_donacion" class="form-label">Porcentaje de Donación</label>
+                    <select class="form-select" name="porcentaje_donacion" id="porcentaje_donacion">
+                        <option value="0" {% if porcentaje_donacion == 0 %}selected{% endif %}>0%</option>
+                        <option value="5" {% if porcentaje_donacion == 5 %}selected{% endif %}>5%</option>
+                        <option value="10" {% if porcentaje_donacion == 10 %}selected{% endif %}>10%</option>
+                        <option value="15" {% if porcentaje_donacion == 15 %}selected{% endif %}>15%</option>
+                    </select>
+                </div>
+
+                <h4>Tipos de Árboles (Opcional)</h4>
+                <div class="mb-3">
+                    <label for="tipo_arbol" class="form-label">Seleccionar Tipo de Árbol</label>
+                    <select class="form-select" name="tipo_arbol" id="tipo_arbol">
+                        <option value="">No Apadrinar</option> 
+                        {% for arbol in tipos_arbol %}
+                            <option value="{{ arbol.id }}" data-costo="{{ arbol.costo }}" {% if arbol.id == selected_arbol %}selected{% endif %}>
+                                {{ arbol.nombre }} - ${{ arbol.costo }} - {{ arbol.descripcion }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <h2>Total Carrito: $<span id="total_carrito">{{ total_carrito }}</span></h2>
+                <h4>Total Envío: $<span id="costo_envio">{{ costo_envio }}</span></h4>
+                <h3>Total Donación: $<span id="total_donacion">{{ total_donacion }}</span></h3>
+                <h4 id="costo_arbol_section" style="display:none;">Costo del Árbol: $<span id="costo_arbol">{{ costo_arbol }}</span></h4>
+                <h5>Total Final (Carrito + Árbol + Envío): $<span id="total_con_arbol">{{ total_con_arbol }}</span></h5>
+
+                <button type="submit" class="btn btn-primary">Proceder a la Compra</button>
+            </form>
+
         {% else %}
             <p>No tienes productos en el carrito.</p>
             <a href="{% url 'productos:pagina_principal' %}" class="btn btn-primary">Volver a Comprar</a>
         {% endif %}
     </div>
 
-    <!-- Scripts de JavaScript (Bootstrap) -->
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const totalCarritoSpan = document.getElementById('total_carrito');
+            const porcentajeDonacionSelect = document.getElementById('porcentaje_donacion');
+            const tipoArbolSelect = document.getElementById('tipo_arbol');
+            const metodoEntregaSelect = document.getElementById('metodo_entrega');
+            const totalDonacionSpan = document.getElementById('total_donacion');
+            const costoArbolSpan = document.getElementById('costo_arbol');
+            const costoArbolSection = document.getElementById('costo_arbol_section');
+            const totalConArbolSpan = document.getElementById('total_con_arbol');
+            const costoEnvioSpan = document.getElementById('costo_envio');
+
+            calcularTotal();
+
+            porcentajeDonacionSelect.addEventListener('change', calcularTotal);
+            tipoArbolSelect.addEventListener('change', calcularTotal);
+            metodoEntregaSelect.addEventListener('change', calcularTotal);
+
+            document.querySelectorAll('.btn-decrease').forEach(button => {
+                button.addEventListener('click', () => {
+                    const form = button.closest('form');
+                    const input = form.querySelector('.cantidad-input');
+                    let cantidad = parseInt(input.value, 10);
+                    if (cantidad > 1) {
+                        input.value = cantidad - 1;
+                        actualizarCarrito(form, input.value);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.btn-increase').forEach(button => {
+                button.addEventListener('click', () => {
+                    const form = button.closest('form');
+                    const input = form.querySelector('.cantidad-input');
+                    let cantidad = parseInt(input.value, 10);
+                    input.value = cantidad + 1;
+                    actualizarCarrito(form, input.value);
+                });
+            });
+
+            function actualizarCarrito(form, cantidad) {
+                const url = form.action;
+                const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: new URLSearchParams({
+                        'cantidad': cantidad
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const totalProductoElement = document.querySelector(`.total-producto[data-id="${data.item_id}"]`);
+                        if (totalProductoElement) {
+                            totalProductoElement.textContent = `$${parseFloat(data.nuevo_total_producto).toFixed(2)}`;
+                        }
+                        const nuevoTotalCarrito = parseFloat(data.nuevo_total_carrito);
+                        if (!isNaN(nuevoTotalCarrito)) {
+                            totalCarritoSpan.textContent = nuevoTotalCarrito.toFixed(2);
+                            calcularTotal(); 
+                        }
+                    }
+                })
+                .catch(() => {});
+            }
+
+            function calcularTotal() {
+                const totalCarrito = parseFloat(totalCarritoSpan.textContent);
+                const porcentajeDonacion = parseFloat(porcentajeDonacionSelect.value);
+                const totalDonacion = calcularDonacion(totalCarrito, porcentajeDonacion);
+                totalDonacionSpan.textContent = totalDonacion.toFixed(2);
+
+                const costoArbol = obtenerCostoArbolSeleccionado();
+                actualizarSeccionArbol(costoArbol);
+
+                const costoEnvio = obtenerCostoEnvioSeleccionado();
+                costoEnvioSpan.textContent = costoEnvio.toFixed(2);
+
+                const totalConArbol = totalCarrito + costoArbol + costoEnvio;
+                totalConArbolSpan.textContent = totalConArbol.toFixed(2);
+            }
+
+            function calcularDonacion(total, porcentaje) {
+                return total * (porcentaje / 100);
+            }
+
+            function obtenerCostoArbolSeleccionado() {
+                const arbolSeleccionado = tipoArbolSelect.options[tipoArbolSelect.selectedIndex];
+                return arbolSeleccionado.value !== "" ? parseFloat(arbolSeleccionado.getAttribute('data-costo')) : 0;
+            }
+
+            function obtenerCostoEnvioSeleccionado() {
+                const metodoSeleccionado = metodoEntregaSelect.options[metodoEntregaSelect.selectedIndex];
+                return metodoSeleccionado ? parseFloat(metodoSeleccionado.getAttribute('data-costo')) : 0;
+            }
+
+            function actualizarSeccionArbol(costoArbol) {
+                if (costoArbol > 0) {
+                    costoArbolSection.style.display = "block";
+                } else {
+                    costoArbolSection.style.display = "none";
+                }
+                costoArbolSpan.textContent = costoArbol.toFixed(2);
+            }
+        });
+    </script>
 </body>
 </html>
-

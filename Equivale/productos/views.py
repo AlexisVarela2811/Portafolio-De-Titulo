@@ -1,14 +1,16 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
-from .models import Categoria, Producto, Carrito, CarritoItem
+from .models import Categoria, Producto, Carrito, CarritoItem, Pedido, Donacion, ApadrinamientoArbol, TipoArbol, MetodoEntrega, Envio, CarritoItem
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .forms import ProductoForm, SearchForm
+from .forms import ProductoForm, SearchForm, ApadrinamientoArbolForm
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Q
+from django.db.models import Q , Sum
 from django.conf import settings
+from decimal import Decimal
+from django.views.decorators.http import require_POST
 
 #Enviar las subcategorias al front end para poder ser resivido mediante js
 @login_required
@@ -62,12 +64,10 @@ def eliminar_producto(request, id):
 #Grilla principal de productos
 def pagina_principal(request):
     productos = Producto.objects.all().select_related('categoria', 'subcategoria', 'creador')
-
     # Filtros
     categoria_id = request.GET.get('categoria')
     subcategoria_id = request.GET.get('subcategoria')
     search_query = request.GET.get('q')
-
     if categoria_id:
         productos = productos.filter(categoria_id=categoria_id)
     if subcategoria_id:
@@ -77,7 +77,6 @@ def pagina_principal(request):
             Q(nombre__icontains=search_query) | 
             Q(descripcion__icontains=search_query)
         )
-
     # Ordenamiento
     orden = request.GET.get('orden', 'fechacreacion')
     if orden == 'precio_asc':
@@ -88,7 +87,6 @@ def pagina_principal(request):
         productos = productos.order_by('nombre')
     else:
         productos = productos.order_by('-fechacreacion')
-
     # Paginación
     paginator = Paginator(productos, 20)
     page = request.GET.get('page')
@@ -137,12 +135,62 @@ def agregar_carrito(request, producto_id):
 def ver_carrito(request):
     carrito = get_object_or_404(Carrito, usuario=request.user)
     carrito_items = CarritoItem.objects.filter(carrito=carrito)
+    tipos_arbol = TipoArbol.objects.all()
+    metodos_entrega = MetodoEntrega.objects.all()
+
     total_carrito = sum(item.cantidad * item.producto.precio for item in carrito_items)
+    
+    carrito_items_totales = [
+        {
+            'id': item.id,
+            'producto': item.producto,
+            'cantidad': item.cantidad,
+            'total_producto': item.cantidad * item.producto.precio
+        }
+        for item in carrito_items
+    ]
 
-    for item in carrito_items:
-        item.total_precio = item.cantidad * item.producto.precio
+    if request.method == 'POST':
+        porcentaje_donacion = request.POST.get('porcentaje_donacion', '0')
+        metodo_entrega_id = request.POST.get('metodo_entrega', None)
+        
+        try:
+            porcentaje_donacion = int(porcentaje_donacion)
+        except ValueError:
+            porcentaje_donacion = 0
 
-    return render(request, 'productos/ver_carrito.html', {'carrito_items': carrito_items, 'total_carrito': total_carrito})
+        arbol_id = request.POST.get('tipo_arbol')
+        costo_arbol = 0 
+        if arbol_id:
+            arbol = get_object_or_404(TipoArbol, id=arbol_id)
+            costo_arbol = arbol.costo
+
+        if metodo_entrega_id:
+            metodo_entrega = get_object_or_404(MetodoEntrega, id=metodo_entrega_id)
+            costo_envio = metodo_entrega.costo
+        else:
+            costo_envio = 0
+
+        total_donacion = total_carrito * Decimal(porcentaje_donacion) / Decimal(100)
+    else:
+        porcentaje_donacion = 0
+        total_donacion = 0
+        costo_arbol = 0
+        costo_envio = 0
+
+    total_con_arbol = total_carrito + costo_arbol + costo_envio
+
+    return render(request, 'productos/ver_carrito.html', {
+        'carrito_items': carrito_items_totales,
+        'total_carrito': total_carrito,
+        'total_con_arbol': total_con_arbol,
+        'total_donacion': total_donacion,
+        'tipos_arbol': tipos_arbol,
+        'metodos_entrega': metodos_entrega,
+        'porcentaje_donacion': porcentaje_donacion,
+        'costo_arbol': costo_arbol,
+        'costo_envio': costo_envio
+    })
 
 #Eliminar item del carrito
 def eliminar_item_carrito(request, item_id):
@@ -151,18 +199,28 @@ def eliminar_item_carrito(request, item_id):
     return redirect('productos:ver_carrito')
 
 #Actualizar numero de productos en el carro
+@require_POST
 def actualizar_cantidad(request, item_id):
-    item = get_object_or_404(CarritoItem, id=item_id)
-    action = request.POST.get('action')
-    cantidad = int(request.POST.get('cantidad', item.cantidad))
-    if action == 'increase':
-        item.cantidad += 1
-    elif action == 'decrease' and item.cantidad > 1:
-        item.cantidad -= 1
-    else:
-        item.cantidad = cantidad 
-    item.save()
-    return redirect('productos:ver_carrito')
+    if request.method == 'POST':
+        cantidad = int(request.POST.get('cantidad', 1))
+        try:
+            carrito_item = CarritoItem.objects.get(id=item_id)
+            carrito_item.cantidad = cantidad
+            carrito_item.save()
+
+            total_producto = carrito_item.cantidad * carrito_item.producto.precio
+            total_carrito = sum(item.cantidad * item.producto.precio for item in CarritoItem.objects.filter(carrito=carrito_item.carrito))
+
+            return JsonResponse({
+                'success': True,
+                'item_id': item_id,
+                'nuevo_total_producto': total_producto,
+                'nuevo_total_carrito': total_carrito
+            })
+
+        except CarritoItem.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Item no encontrado'})
+    return JsonResponse({'success': False, 'error': 'Método no permitido'})
 
 #Busqueda productos
 def buscar_productos(request):
@@ -182,3 +240,79 @@ def buscar_productos(request):
         'form': form,
     }
     return render(request, 'productos/buscar_productos.html', context)
+
+@login_required
+def checkout_vista(request):
+    carrito = get_object_or_404(Carrito, usuario=request.user)
+    carrito_items = CarritoItem.objects.filter(carrito=carrito)
+
+    if request.method == 'POST':
+        form = CheckoutForm(request.POST)
+        if form.is_valid():
+            pedido = Pedido.objects.create(
+                usuario=request.user,
+                total=0,  
+                metodo_entrega=form.cleaned_data['metodo_entrega'],
+                direccion_entrega=form.cleaned_data['direccion_entrega'],
+                region_entrega=form.cleaned_data['region_entrega'],
+                comuna_entrega=form.cleaned_data['comuna_entrega'],
+            )
+
+            total_donacion = 0
+            if form.cleaned_data['causa_donacion']:
+                porcentaje = form.cleaned_data['porcentaje_donacion']
+                total_donacion = carrito_items.aggregate(
+                    total=Sum('cantidad' * 'producto__precio')
+                )['total'] or 0
+                total_donacion *= (porcentaje / 100)
+
+                donacion = Donacion.objects.create(
+                    pedido_donacion=pedido,
+                    causa=form.cleaned_data['causa_donacion'],
+                    monto=total_donacion,
+                    porcentaje=porcentaje,
+                )
+                pedido.monto_donacion = donacion
+
+            apadrinamiento = None
+            if form.cleaned_data['apadrinamiento']:
+                apadrinamiento = ApadrinamientoArbol.objects.create(
+                    usuario=request.user,
+                    tipo_arbol=form.cleaned_data['tipo_arbol'],
+                    latitud=form.cleaned_data['latitud'],
+                    longitud=form.cleaned_data['longitud'],
+                )
+                pedido.apadrinamiento = apadrinamiento
+
+            total_productos = carrito_items.aggregate(
+                total=Sum('cantidad' * 'producto__precio')
+            )['total'] or 0
+
+            costo_envio = calcular_costo_envio(
+                pedido.metodo_entrega,
+                pedido.region_entrega,
+                pedido.comuna_entrega
+            )
+
+            pedido.total = total_productos + total_donacion + costo_envio
+            pedido.save()
+
+            return redirect('productos:pedido_exitoso')
+
+    else:
+        form = CheckoutForm()
+        arbol_form = ApadrinamientoArbolForm()
+    return render(request, 'productos/checkout.html', {
+        'form': form,
+        'carrito_items': carrito_items,
+        'arbol_form': arbol_form,
+    })
+
+def calcular_total_pedido(request):
+    total = pedido.carrito.products.aggregate(total=Sum('Precio'))['total'] or 0
+    if pedido.monto_donacion:
+        total += pedido.monto_donacion
+    costo_envio = calcular_costo_envio(pedido.region_entrega, pedido.comuna_entrega)
+    total += costo_envio
+    return total
+
