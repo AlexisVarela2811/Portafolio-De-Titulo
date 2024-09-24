@@ -1,19 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-<form method="POST">
-    {% csrf_token %}
-    <h2>Información de Perfil</h2>
-    {{ perfil_form.as_p }}
-    <h2>Dirección</h2>
-    {{ direccion_form.as_p }}
-    <button type="submit">Actualizar</button>
-</form>
+{% extends 'base.html' %}
+{% load static %}
 
-</body>
-</html>
+{% block content %}
+<div class="container mx-auto mt-6 p-6 bg-white shadow-md rounded-lg">
+    <h2 class="text-3xl font-bold text-[#69620e]">Mi Perfil</h2>
+    <form method="POST" class="mt-4">
+        {% csrf_token %}
+
+        <h3 class="text-2xl font-semibold text-[#69620e] mt-4">Información de Perfil</h3>
+        <div class="grid grid-cols-1 gap-4 mt-2">
+            <div>
+                <label for="id_nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+                <input type="text" name="nombre" id="id_nombre" value="{{ perfil_form.nombre.value }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm">
+            </div>
+            <div>
+                <label for="id_email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" name="email" id="id_email" value="{{ perfil_form.email.value }}" readonly class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm">
+            </div>
+        </div>
+
+        <h3 class="text-2xl font-semibold text-[#69620e] mt-6">Dirección</h3>
+        <div class="grid grid-cols-1 gap-4 mt-2">
+            <div>
+                <label for="id_direccion" class="block text-sm font-medium text-gray-700">Dirección</label>
+                <input type="text" name="direccion" id="id_direccion" 
+                    value="{{ direccion_form.direccion.value|default:'' }}" 
+                    placeholder="{% if not direccion_form.direccion.value %}Ingresa tu dirección{% endif %}" 
+                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm">
+            </div>
+            <div>
+                <label for="id_comuna" class="block text-sm font-medium text-gray-700">Comuna</label>
+                <select name="comuna" id="id_comuna" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm">
+                    <option value="" disabled {% if not direccion_form.comuna.value %}selected{% endif %}>Seleccionar comuna</option>
+                    {% for comuna in direccion_form.comuna.field.queryset %}
+                        <option value="{{ comuna.id }}" {% if comuna.id == direccion_form.comuna.value %}selected{% endif %}>{{ comuna.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <button type="submit" class="mt-6 w-full bg-[#69620e] hover:bg-[#75735A] text-white font-bold py-2 px-4 rounded">Actualizar</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,57 +1,115 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% if editing %}Editar{% else %}Crear{% endif %} Producto</title>
-</head>
-<body>
-    <header>
-        <h1>Gestión de Productos</h1>
-    </header>
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% if editing %}Editar{% else %}Crear{% endif %} Producto{% endblock %}
 
-    <main>
-        <section>
-            <h2>{% if editing %}Editar{% else %}Crear{% endif %} Producto</h2>
+{% block content %}
+<header class="bg-[#69620e] text-white p-4">
+    <h1 class="text-xl">Gestión de Productos</h1>
+</header>
 
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                
-                {{ form.as_p }}
+<main class="p-4">
+    <section class="bg-[#e1e0d9] shadow-md rounded-lg p-6">
+        <h2 class="text-2xl font-semibold mb-4 text-[#75735A]">{% if editing %}Editar{% else %}Crear{% endif %} Producto</h2>
 
-                <button type="submit">{% if editing %}Actualizar{% else %}Guardar{% endif %}</button>
-            </form>
-        </section>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
 
-        <!-- Script para la actualización de las subcategorias a la hora de la creacion de productos -->
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                var categoriaSelect = document.getElementById('id_categoria');
-                var subcategoriaSelect = document.getElementById('id_subcategoria');
-                categoriaSelect.addEventListener('change', function() {
-                    var categoriaId = this.value;
-                    subcategoriaSelect.innerHTML = '';
-                    if (categoriaId) {
-                        fetch("{% url 'productos:obtener_subcategorias' %}?categoria_padre_id=" + encodeURIComponent(categoriaId))
-                        .then(response => response.json())
-                        .then(data => {
-                            var subcategorias = data.subcategorias;
-                            subcategoriaSelect.innerHTML = '';
-                            if (subcategorias.length > 0) {
-                                subcategoriaSelect.appendChild(new Option('Seleccione una subcategoría', '')); 
-                                subcategorias.forEach(subcategoria => {
-                                    subcategoriaSelect.appendChild(new Option(subcategoria.nombre, subcategoria.id));
-                                });
-                            } else {
-                                subcategoriaSelect.appendChild(new Option('No hay subcategorías disponibles', ''));
-                            }
-                        })
-                    } else {
-                        subcategoriaSelect.innerHTML = '<option value="">Seleccione una subcategoría</option>';
-                    }
-                });
+            <div class="mb-4">
+                <label for="id_categoria" class="block text-[#75735A]">Categoría:</label>
+                <select id="id_categoria" name="categoria" class="mt-1 block w-full border-[#75735A] rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    <option value="">Seleccione una categoría</option>
+                    {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}" {% if editing and form.instance.categoria.id == categoria.id %}selected{% endif %}>
+                            {{ categoria.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label for="id_subcategoria" class="block text-[#75735A]">Subcategoría:</label>
+                <select id="id_subcategoria" name="subcategoria" class="mt-1 block w-full border-[#75735A] rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    <option value="">Seleccione una subcategoría</option>
+                    {% if editing %}
+                        {% for subcategoria in form.subcategoria.queryset %}
+                            <option value="{{ subcategoria.id }}" {% if form.instance.subcategoria.id == subcategoria.id %}selected{% endif %}>
+                                {{ subcategoria.nombre }}
+                            </option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label for="id_nombre" class="block text-[#75735A]">Nombre del Producto:</label>
+                <input type="text" id="id_nombre" name="nombre" value="{{ form.instance.nombre }}" class="mt-1 block w-full border-[#75735A] rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" required>
+            </div>
+
+            <div class="mb-4">
+                <label for="id_descripcion" class="block text-[#75735A]">Descripción:</label>
+                <textarea id="id_descripcion" name="descripcion" class="mt-1 block w-full border-[#75735A] rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" rows="3" required>{{ form.instance.descripcion }}</textarea>
+            </div>
+
+            <div class="mb-4">
+                <label for="id_marca" class="block text-[#75735A]">Marca:</label>
+                <input type="text" id="id_marca" name="marca" value="{{ form.instance.marca }}" class="mt-1 block w-full border-[#75735A] rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" required>
+            </div>
+
+            <div class="mb-4">
+                <label for="id_precio" class="block text-[#75735A]">Precio:</label>
+                <input type="number" id="id_precio" name="precio" value="{{ form.instance.precio }}" class="mt-1 block w-full border-[#75735A] rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" step="0.25" required>
+            </div>
+            
+
+            <div class="mb-4">
+                <label for="id_stock" class="block text-[#75735A]">Stock:</label>
+                <input type="number" id="id_stock" name="stock" value="{{ form.instance.stock }}" class="mt-1 block w-full border-[#75735A] rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" required>
+            </div>
+
+            <div class="mb-4">
+                <label for="id_imagen" class="block text-[#75735A]">Imagen:</label>
+                <input type="file" id="id_imagen" name="imagen" class="mt-1 block w-full border-[#75735A] rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                {% if form.instance.imagen %}
+                    <img src="{{ form.instance.imagen.url }}" alt="Imagen del producto" class="mt-2 h-24">
+                {% endif %}
+            </div>
+
+            <div class="mb-4">
+                <button type="submit" class="w-full bg-[#69620e] text-white py-2 rounded-md hover:bg-[#75735A] transition duration-200">
+                    {% if editing %}Actualizar{% else %}Guardar{% endif %}
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <!-- Script para la actualización de las subcategorías -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var categoriaSelect = document.getElementById('id_categoria');
+            var subcategoriaSelect = document.getElementById('id_subcategoria');
+            categoriaSelect.addEventListener('change', function() {
+                var categoriaId = this.value;
+                subcategoriaSelect.innerHTML = '';
+                if (categoriaId) {
+                    fetch("{% url 'productos:obtener_subcategorias' %}?categoria_padre_id=" + encodeURIComponent(categoriaId))
+                    .then(response => response.json())
+                    .then(data => {
+                        var subcategorias = data.subcategorias;
+                        subcategoriaSelect.innerHTML = '';
+                        if (subcategorias.length > 0) {
+                            subcategoriaSelect.appendChild(new Option('Seleccione una subcategoría', '')); 
+                            subcategorias.forEach(subcategoria => {
+                                subcategoriaSelect.appendChild(new Option(subcategoria.nombre, subcategoria.id));
+                            });
+                        } else {
+                            subcategoriaSelect.appendChild(new Option('No hay subcategorías disponibles', ''));
+                        }
+                    });
+                } else {
+                    subcategoriaSelect.innerHTML = '<option value="">Seleccione una subcategoría</option>';
+                }
             });
-        </script>
-    </main>
-</body>
-</html>
+        });
+    </script>
+</main>
+{% endblock %}

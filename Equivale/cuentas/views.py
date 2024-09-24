@@ -74,3 +74,7 @@ def perfil_view(request):
         'perfil_form': perfil_form,
         'direccion_form': direccion_form,
     })
+
+
+def base_view(request):
+    return render(request, 'base.html')

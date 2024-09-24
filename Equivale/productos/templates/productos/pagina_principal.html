@@ -1,69 +1,103 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Equivale</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <style>
-        .product-card {
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 20px;
-            transition: box-shadow 0.3s;
-        }
-        .product-card:hover {
-            box-shadow: 0 0 11px rgba(33,33,33,.2); 
-        }
-        .product-image {
-            max-height: 200px;
-            object-fit: contain;
-        }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Listado de Productos{% endblock %}
 
-    <form class="form-inline my-2 my-lg-0" method="get" action="{% url 'productos:buscar_productos' %}">
-        <input class="form-control mr-sm-2" type="search" name="query" placeholder="Buscar productos" aria-label="Search">
-        <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Buscar</button>
-    </form>
-<!-- Listado de Productos -->
-<div class="row">
-    {% for producto in productos %}
-        <div class="col-md-3">
-            <div class="product-card">
-                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="img-fluid product-image">
-                <h5 class="mt-2">{{ producto.nombre }}</h5>
-                <p class="text-muted">${{ producto.precio }}</p>
-
-                {% if user.is_authenticated %}
-                <form action="{% url 'productos:agregar_carrito' producto.id %}" method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-success btn-sm">Agregar al Carrito</button>
-                </form>
-                {% else %}
-                    <a href="{% url 'cuentas:login' %}" class="btn btn-success btn-sm">Iniciar Sesión</a>
-                {% endif %}
-
-                <!-- Detalles del producto -->
-                <ul>
-                    <li>Categoría: {{ producto.categoria }}</li>
-                    <li>Categoría: {{ producto.subcategoria }}</li>
-                    <li>Marca: {{ producto.marca }}</li>
-                    <li>Stock: {{ producto.stock }}</li>
-                    <li>Descripción: {{ producto.descripcion }}</li>
+{% block content %}
+<div class="flex flex-col md:flex-row">
+    <!-- Filtro por Categoría -->
+    <div class="w-full md:w-1/4 p-4">
+        <h2 class="text-xl font-bold mb-4">Filtrar por Categoría</h2>
+        <form method="get" action="{% url 'productos:pagina_principal' %}">
+            <div class="mb-4">
+                <h3 class="font-semibold">Categorías</h3>
+                <ul class="space-y-2">
+                    {% for categoria in categorias %}
+                        <li>
+                            <label class="flex items-center">
+                                <input type="radio" name="categoria" value="{{ categoria.id }}" {% if categoria_id == categoria.id %}checked{% endif %} class="mr-2">
+                                {{ categoria.nombre }}
+                            </label>
+                        </li>
+                    {% endfor %}
                 </ul>
             </div>
+
+            <!-- Filtro por Precios -->
+            <div class="mb-4">
+                <h3 class="font-semibold">Filtrar por Precio</h3>
+                <label class="flex items-center">
+                    Mínimo:
+                    <input type="number" name="precio_min" value="{{ precio_min }}" class="ml-2 border rounded p-1" placeholder="0">
+                </label>
+                <label class="flex items-center mt-2">
+                    Máximo:
+                    <input type="number" name="precio_max" value="{{ precio_max }}" class="ml-2 border rounded p-1" placeholder="0">
+                </label>
+            </div>
+
+            {% if subcategorias %}
+            <div class="mb-4">
+                <h3 class="font-semibold">Subcategorías</h3>
+                <ul class="space-y-2">
+                    {% for subcategoria in subcategorias %}
+                        <li>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="subcategoria" value="{{ subcategoria.id }}" {% if subcategoria.id in subcategoria_ids %}checked{% endif %} class="mr-2">
+                                {{ subcategoria.nombre }}
+                            </label>
+                        </li>
+                    {% empty %}
+                        <li>No hay subcategorías disponibles.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- Botones de Ordenamiento -->
+            <div class="mb-4">
+                <h3 class="font-semibold">Ordenar por Precio</h3>
+                <div class="flex space-x-2">
+                    <button type="submit" name="orden" value="precio_asc" class="bg-[#69620e] text-white py-1 px-3 rounded">Precio Ascendente</button>
+                    <button type="submit" name="orden" value="precio_desc" class="bg-[#69620e] text-white py-1 px-3 rounded">Precio Descendente</button>
+                </div>
+            </div>
+
+            <button type="submit" class="mt-4 bg-[#69620e] text-white py-2 px-4 rounded">Aplicar Filtros</button>
+        </form>
+    </div>
+    
+    <!-- Listado de Productos -->
+    <div class="flex-grow p-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {% for producto in productos %}
+                <div class="bg-[#75735A] rounded-lg flex flex-col items-center justify-center p-4 relative shadow-lg transition-all duration-300 hover:bg-[#69620e]">
+                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="w-32 h-32 object-cover rounded-full mb-2">
+                    <p class="font-semibold text-black tracking-wider text-lg">{{ producto.nombre }}</p>
+                    <p class="font-semibold text-gray-600 text-xs">{{ producto.descripcion }}</p>
+                    <div class="flex flex-col justify-between items-center w-full mt-2">
+                        <p class="text-black font-semibold">${{ producto.precio }}</p>
+                        {% if user.is_authenticated %}
+                            <form action="{% url 'productos:agregar_carrito' producto.id %}" method="post" class="w-full">
+                                {% csrf_token %}
+                                <button type="submit" class="bg-[#69620e] text-white py-2 px-4 rounded-full shadow hover:bg-opacity-80 w-full">Agregar al Carrito</button>
+                            </form>
+                        {% else %}
+                            <a href="{% url 'cuentas:login' %}" class="bg-[#69620e] text-white py-2 px-4 rounded-full shadow hover:bg-opacity-80 w-full text-center">Agregar al Carrito</a>
+                        {% endif %}
+                    </div>
+                    <ul class="mt-2 text-sm text-gray-600">
+                        <li>Categoría: {{ producto.categoria }}</li>
+                        <li>Subcategoria: {{ producto.subcategoria }}</li>
+                        <li>Marca: {{ producto.marca }}</li>
+                        <li>Stock: {{ producto.stock }}</li>
+                    </ul>
+                </div>
+            {% empty %} 
+                <div class="col-12">
+                    <p>No hay productos disponibles.</p>
+                </div>
+            {% endfor %}
         </div>
-    {% empty %}
-        <div class="col-12">
-            <p>No hay productos disponibles.</p>
-        </div>
-    {% endfor %}
-</div></div>
-    <!-- Scripts de JavaScript (Bootstrap) -->
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
-</body>
-</html>
+    </div>
+</div>
+{% endblock %}

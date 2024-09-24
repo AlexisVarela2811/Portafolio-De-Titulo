@@ -1,24 +1,77 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Registro</title>
-</head>
-<body>
-    <h1>Registro de Usuario</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Registrar</button>
-    </form>
-    <div>
-        {% if messages %}
-            {% for message in messages %}
-                <p>{{ message }}</p>
-            {% endfor %}
-        {% endif %}
-        <a href="{% url 'social:begin' 'github' %}">Registrarte con GitHub</a>
-        <a href="{% url 'social:begin' 'google-oauth2' %}">Registrarte sesión con Google</a>
-    </div>
-</body>
-</html>
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Registro{% endblock %}
 
+{% block content %}
+<div class="h-screen w-full">
+    <div class="h-full w-full flex items-center justify-center">
+        <div class="h-full w-full">
+            <div class="flex flex-col h-full bg-center bg-cover items-center justify-center w-full gap-5 bg-gradient-to-tr from-[#e1e0d9] via-[#75735A] to-[#75735A]">
+                <h2 class="text-white text-2xl font-bold mb-5">Crear Cuenta</h2>
+                <ul class="inline-flex items-center text-xl gap-10 mb-5">
+                    <li>
+                        <a href="{% url 'social:begin' 'google-oauth2' %}">
+                            <img src="{% static 'img/google.png' %}" class="w-12 h-12 p-3 rounded-full border hover:scale-110 transition-all hover:bg-[#69620e]" viewBox="0 0 256 256" alt="githublogo">
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'social:begin' 'github' %}">
+                            <img src="{% static 'img/github.png' %}" class="w-12 h-12 p-3 rounded-full border hover:scale-110 transition-all hover:bg-[#69620e]" viewBox="0 0 256 256" alt="githublogo">
+                        </a>
+                    </li>
+                </ul>
+                <p class="text-white text-right mb-2">o usa el correo electrónico de tu cuenta</p>
+                <form method="post" class="w-96 flex flex-col items-center">
+                    {% csrf_token %}
+                    <input
+                        type="text"
+                        name="nombre"
+                        id="nombre"
+                        class="bg-white/50 hover:bg-white placeholder:text-[#75735A] placeholder:text-sm text-[#75735A] py-3 px-5 focus:text-[#958b08] focus:outline focus:outline-offset-1 focus:outline-[#958b08] rounded-md mb-6 w-full"
+                        placeholder="Ingresa tu nombre aquí!"
+                        required
+                    />
+                    <input
+                        type="email"
+                        name="email"
+                        id="email"
+                        class="bg-white/50 hover:bg-white placeholder:text-[#75735A] placeholder:text-sm text-[#75735A] py-3 px-5 focus:text-[#958b08] focus:outline focus:outline-offset-1 focus:outline-[#958b08] rounded-md mb-6 w-full"
+                        placeholder="Ingresa tu correo aquí!"
+                        required
+                    />
+                    <input
+                        type="password"
+                        name="password"
+                        id="password"
+                        class="bg-white/50 hover:bg-white placeholder:text-[#75735A] placeholder:text-sm text-[#75735A] py-3 px-5 focus:text-[#958b08] focus:outline focus:outline-offset-1 focus:outline-[#958b08] rounded-md mb-6 w-full"
+                        placeholder="Ingresa tu contraseña aquí!"
+                        required
+                    />
+                    <input
+                        type="password"
+                        name="confirm_password"
+                        id="confirm_password"
+                        class="bg-white/50 hover:bg-white placeholder:text-[#75735A] placeholder:text-sm text-[#75735A] py-3 px-5 focus:text-[#958b08] focus:outline focus:outline-offset-1 focus:outline-[#958b08] rounded-md mb-6 w-full"
+                        placeholder="Confirma tu contraseña aquí!"
+                        required
+                    />
+                    <button
+                        type="submit"
+                        class="px-6 py-2 bg-[#69620e] rounded hover:bg-white hover:text-[#6f680d] font-semibold transition-all text-white hover:scale-110 w-full"
+                    >
+                        Registrar
+                    </button>
+                </form>
+                <div class="text-center mt-2">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <p class="text-red-500">{{ message }}</p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <p class="text-white text-center mt-4">¿Ya tienes una cuenta? <a href="{% url 'cuentas:login' %}" class="text-blue-400">Inicia sesión aquí</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

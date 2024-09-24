@@ -35,7 +35,10 @@ def gestionar_productos(request, id=None):
         form = ProductoForm(request.POST or None, request.FILES or None, instance=producto)
     else:
         form = ProductoForm(request.POST or None, request.FILES or None)
-    
+
+    # Filtrar solo las categorías padres
+    categorias = Categoria.objects.filter(categoria_padre__isnull=True)
+
     if request.method == 'POST':
         if form.is_valid():
             producto = form.save(commit=False)
@@ -43,8 +46,12 @@ def gestionar_productos(request, id=None):
                 producto.creador = request.user
             producto.save()
             return redirect('productos:listar_productos')
-    
-    return render(request, 'productos/gestionar_productos.html', {'form': form, 'editing': id is not None})
+
+    return render(request, 'productos/gestionar_productos.html', {
+        'form': form,
+        'editing': id is not None,
+        'categorias': categorias  
+    })
 
 #Muestra la lista de productos del usuario
 @login_required
@@ -61,22 +68,48 @@ def eliminar_producto(request, id):
         return redirect('productos:listar_productos')
     return render(request, 'productos/eliminar_confirmar.html', {'producto': producto})
 
-#Grilla principal de productos
+
+
+
+
+
+
+
 def pagina_principal(request):
     productos = Producto.objects.all().select_related('categoria', 'subcategoria', 'creador')
+    
+    # Obtener categorías
+    categorias = Categoria.objects.filter(categoria_padre__isnull=True)
+
     # Filtros
     categoria_id = request.GET.get('categoria')
-    subcategoria_id = request.GET.get('subcategoria')
+    subcategoria_ids = request.GET.getlist('subcategoria')
     search_query = request.GET.get('q')
+    precio_min = request.GET.get('precio_min')
+    precio_max = request.GET.get('precio_max')
+    # Filtrar productos por categoría
     if categoria_id:
         productos = productos.filter(categoria_id=categoria_id)
-    if subcategoria_id:
-        productos = productos.filter(subcategoria_id=subcategoria_id)
+    
+    # Filtrar productos por subcategoría
+    if subcategoria_ids:
+        productos = productos.filter(subcategoria_id__in=subcategoria_ids)
+
+    # Filtrar productos por búsqueda
     if search_query:
         productos = productos.filter(
             Q(nombre__icontains=search_query) | 
             Q(descripcion__icontains=search_query)
         )
+    #Filtrar por precio
+    if precio_min:
+        productos = productos.filter(precio__gte=precio_min)
+    if precio_max:
+        productos = productos.filter(precio__lte=precio_max)
+
+    # Obtener subcategorías si se selecciona una categoría
+    subcategorias = Categoria.objects.filter(categoria_padre_id=categoria_id) if categoria_id else []
+
     # Ordenamiento
     orden = request.GET.get('orden', 'fechacreacion')
     if orden == 'precio_asc':
@@ -87,6 +120,7 @@ def pagina_principal(request):
         productos = productos.order_by('nombre')
     else:
         productos = productos.order_by('-fechacreacion')
+
     # Paginación
     paginator = Paginator(productos, 20)
     page = request.GET.get('page')
@@ -97,18 +131,20 @@ def pagina_principal(request):
     except EmptyPage:
         productos = paginator.page(paginator.num_pages)
 
-    categorias = Categoria.objects.filter(categoria_padre__isnull=True)
-
     context = {
         'productos': productos,
         'categorias': categorias,
         'categoria_id': categoria_id,
-        'subcategoria_id': subcategoria_id,
+        'subcategorias': subcategorias,
+        'subcategoria_ids': subcategoria_ids,
         'search_query': search_query,
         'orden': orden,
+        'precio_min': precio_min,
+        'precio_max': precio_max
     }
-
+    
     return render(request, 'productos/pagina_principal.html', context)
+
 
 #Detalle de un producto
 def detalle_producto(request, id):

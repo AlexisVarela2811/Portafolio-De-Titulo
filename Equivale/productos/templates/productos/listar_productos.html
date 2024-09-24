@@ -1,57 +1,59 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Productos</title>
-</head>
-<body>
-    <header>
-        <h1>Lista de Productos</h1>
-        <a href="{% url 'productos:gestionar_productos' %}">Crear Nuevo Producto</a>
-    </header>
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Lista de Productos{% endblock %}
 
-    <main>
-        <table>
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Descripción</th>
-                    <th>Precio</th>
-                    <th>Stock</th>
-                    <th>Imagen</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for producto in productos %}
-                <tr>
-                    <td>{{ producto.nombre }}</td>
-                    <td>{{ producto.descripcion }}</td>
-                    <td>${{ producto.precio }}</td>
-                    <td>{{ producto.stock }}</td>
-                    <td>
-                        {% if producto.imagen %}
-                        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" style="max-width: 100px;">
-                        {% else %}
-                        No Disponible
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{% url 'productos:gestionar_productos_con_id' producto.id %}">Editar</a>
-                        <form action="{% url 'productos:eliminar_producto' producto.id %}" method="post" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit">Eliminar</button>
-                        </form>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="6">No hay productos disponibles.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </main>
-</body>
-</html>
+{% block content %}
+<div class="h-screen w-full">
+    <div class="h-full w-full flex items-center justify-center">
+        <div class="h-full w-full">
+            <div class="flex flex-col h-full bg-center bg-cover items-center justify-center w-full gap-5 bg-gradient-to-tr from-[#e1e0d9] via-[#75735A] to-[#75735A]">
+                <h1 class="text-white text-2xl font-bold mb-5">Lista de Productos</h1>
+                <a href="{% url 'productos:gestionar_productos' %}" class="px-6 py-2 bg-[#69620e] text-white rounded hover:bg-white hover:text-[#69620e] font-semibold transition-all mb-5">Crear Nuevo Producto</a>
+
+                <div class="overflow-x-auto w-full">
+                    <table class="min-w-full bg-white rounded-lg shadow-lg">
+                        <thead>
+                            <tr class="bg-[#69620e] text-white">
+                                <th class="py-3 px-4 text-left">Nombre</th>
+                                <th class="py-3 px-4 text-left">Descripción</th>
+                                <th class="py-3 px-4 text-left">Precio</th>
+                                <th class="py-3 px-4 text-left">Stock</th>
+                                <th class="py-3 px-4 text-left">Imagen</th>
+                                <th class="py-3 px-4 text-left">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for producto in productos %}
+                            <tr class="hover:bg-[#e1e0d9]">
+                                <td class="py-3 px-4 text-[#75735A] text-left">{{ producto.nombre }}</td>
+                                <td class="py-3 px-4 text-[#75735A] text-left">{{ producto.descripcion }}</td>
+                                <td class="py-3 px-4 text-[#75735A] text-left">${{ producto.precio }}</td>
+                                <td class="py-3 px-4 text-[#75735A] text-left">{{ producto.stock }}</td>
+                                <td class="py-3 px-4 text-left">
+                                    {% if producto.imagen %}
+                                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="max-w-[100px]">
+                                    {% else %}
+                                    No Disponible
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 px-4 text-left">
+                                    <a href="{% url 'productos:gestionar_productos_con_id' producto.id %}" class="text-blue-400 hover:underline">Editar</a>
+                                    <form action="{% url 'productos:eliminar_producto' producto.id %}" method="post" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="text-red-500 hover:underline">Eliminar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-[#75735A]">No hay productos disponibles.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
