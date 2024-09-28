@@ -65,10 +65,11 @@ class Donacion(models.Model):
 # Pedido
 class Pedido(models.Model):
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    carrito = models.ForeignKey('Carrito', on_delete=models.CASCADE)
+    total_final = models.DecimalField(max_digits=10, decimal_places=2)
+    carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE)
     fecha_pedido = models.DateTimeField(auto_now_add=True)
     total = models.DecimalField(max_digits=10, decimal_places=2)
-    monto_donacion = models.OneToOneField(Donacion, on_delete=models.SET_NULL, null=True, blank=True) 
+    monto_donacion = models.OneToOneField(Donacion, on_delete=models.SET_NULL, null=True, blank=True)
     porcentaje_donacion = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     apadrinamiento = models.ForeignKey('ApadrinamientoArbol', null=True, blank=True, on_delete=models.SET_NULL)
     metodo_entrega = models.ForeignKey('MetodoEntrega', on_delete=models.CASCADE)

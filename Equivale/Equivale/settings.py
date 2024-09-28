@@ -188,6 +188,11 @@ SOCIAL_AUTH_GITHUB_SECRET = ''
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = ''
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = ''
 
+#Paypal
+PAYPAL_CLIENT_ID = ''
+PAYPAL_CLIENT_SECRET = ''
+PAYPAL_MODE = 'sandbox'   
+SITE_URL = 'http://127.0.0.1:8000'
 
 SOCIAL_AUTH_PIPELINE = [
     'social_core.pipeline.social_auth.social_details',  

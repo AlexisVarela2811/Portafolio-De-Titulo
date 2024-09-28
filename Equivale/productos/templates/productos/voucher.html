@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto mt-6 p-4 bg-white shadow-md rounded-lg">
+    <h2 class="text-3xl font-bold text-[#69620e]">Recibo de Pedido</h2>
+    <p><strong>Pedido ID:</strong> {{ pedido.id }}</p>
+    <p><strong>Total Final:</strong> ${{ pedido.total_final }}</p>
+    <p><strong>Método de Entrega:</strong> {{ pedido.metodo_entrega.nombre }}</p>
+    <p><strong>Dirección de Entrega:</strong> {{ pedido.direccion_entrega }}</p>
+    <p><strong>Región de Entrega:</strong> {{ pedido.region_entrega }}</p>
+    <p><strong>Comuna de Entrega:</strong> {{ pedido.comuna_entrega }}</p>
+
+    {% if pedido.monto_donacion %}
+        <p><strong>Donación:</strong> ${{ pedido.monto_donacion }} ({{ pedido.porcentaje_donacion }}%)</p>
+    {% endif %}
+
+    {% if pedido.apadrinamiento %}
+        <p><strong>Árbol Apadrinado:</strong> {{ pedido.apadrinamiento.tipo_arbol.nombre }}</p>
+    {% endif %}
+
+    <p><strong>Estado del Pedido:</strong> {{ pedido.estado }}</p>
+    {% if pedido.usuario == user %}
+    <form action="{% url 'productos:eliminar_pedido' pedido.id %}" method="post" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Eliminar Pedido</button>
+    </form>
+    {% endif %} 
+    <a href="{% url 'productos:pagina_principal' %}" class="mt-4 inline-block bg-[#69620e] text-white font-bold py-2 px-4 rounded hover:bg-[#75735A]">Volver a la Página Principal</a>
+</div>
+{% endblock %}

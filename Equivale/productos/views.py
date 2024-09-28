@@ -1,56 +1,49 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
-from .models import Categoria, Producto, Carrito, CarritoItem, Pedido, Donacion, ApadrinamientoArbol, TipoArbol, MetodoEntrega, Envio, CarritoItem
-from django.contrib.auth.models import User
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from .forms import ProductoForm, SearchForm, ApadrinamientoArbolForm
+from .models import (
+    Categoria, Producto, Carrito, CarritoItem, Pedido, Donacion,
+    ApadrinamientoArbol, TipoArbol, MetodoEntrega, CausaAmbiental
+)
+from .forms import ProductoForm, SearchForm
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Q , Sum
-from django.conf import settings
+from django.db.models import Q
 from decimal import Decimal
 from django.views.decorators.http import require_POST
+from productos.paypal import crear_pago, ejecutar_pago
+from django.http import HttpResponseRedirect
+from django.db import connection
 
 #Enviar las subcategorias al front end para poder ser resivido mediante js
 @login_required
 def obtener_subcategorias(request):
     categoria_padre_id = request.GET.get('categoria_padre_id')
+    subcategorias_data = []
+
     if categoria_padre_id:
-        try:
-            categoria_padre = Categoria.objects.get(id=categoria_padre_id)
-            subcategorias = categoria_padre.subcategorias.all()
-            subcategorias_data = [{'id': subcategoria.id, 'nombre': subcategoria.nombre} for subcategoria in subcategorias]
-            return JsonResponse({'subcategorias': subcategorias_data})
-        except Categoria.DoesNotExist:
-            return JsonResponse({'subcategorias': []})
-    else:
-        return JsonResponse({'subcategorias': []})
+        subcategorias = Categoria.objects.filter(categoria_padre_id=categoria_padre_id)
+        subcategorias_data = [{'id': subcategoria.id, 'nombre': subcategoria.nombre} for subcategoria in subcategorias]
+
+    return JsonResponse({'subcategorias': subcategorias_data})
 
 #Permite editar los productos creados del usuario
 @login_required
 def gestionar_productos(request, id=None):
-    if id:
-        producto = get_object_or_404(Producto, id=id)
-        form = ProductoForm(request.POST or None, request.FILES or None, instance=producto)
-    else:
-        form = ProductoForm(request.POST or None, request.FILES or None)
+    producto = get_object_or_404(Producto, id=id) if id else None
+    form = ProductoForm(request.POST or None, request.FILES or None, instance=producto)
 
-    # Filtrar solo las categorías padres
+    if request.method == 'POST' and form.is_valid():
+        producto = form.save(commit=False)
+        if not producto.pk:
+            producto.creador = request.user
+        producto.save()
+        return redirect('productos:listar_productos')
+
     categorias = Categoria.objects.filter(categoria_padre__isnull=True)
-
-    if request.method == 'POST':
-        if form.is_valid():
-            producto = form.save(commit=False)
-            if not producto.pk:
-                producto.creador = request.user
-            producto.save()
-            return redirect('productos:listar_productos')
-
     return render(request, 'productos/gestionar_productos.html', {
         'form': form,
         'editing': id is not None,
-        'categorias': categorias  
+        'categorias': categorias
     })
 
 #Muestra la lista de productos del usuario
@@ -68,58 +61,39 @@ def eliminar_producto(request, id):
         return redirect('productos:listar_productos')
     return render(request, 'productos/eliminar_confirmar.html', {'producto': producto})
 
-
-
-
-
-
-
-
+#Pagina pricipal de  de productos Grilla
 def pagina_principal(request):
     productos = Producto.objects.all().select_related('categoria', 'subcategoria', 'creador')
-    
-    # Obtener categorías
     categorias = Categoria.objects.filter(categoria_padre__isnull=True)
 
-    # Filtros
+    # Aplicar filtros
     categoria_id = request.GET.get('categoria')
     subcategoria_ids = request.GET.getlist('subcategoria')
     search_query = request.GET.get('q')
     precio_min = request.GET.get('precio_min')
     precio_max = request.GET.get('precio_max')
-    # Filtrar productos por categoría
+
     if categoria_id:
         productos = productos.filter(categoria_id=categoria_id)
-    
-    # Filtrar productos por subcategoría
     if subcategoria_ids:
         productos = productos.filter(subcategoria_id__in=subcategoria_ids)
-
-    # Filtrar productos por búsqueda
     if search_query:
-        productos = productos.filter(
-            Q(nombre__icontains=search_query) | 
-            Q(descripcion__icontains=search_query)
-        )
-    #Filtrar por precio
+        productos = productos.filter(Q(nombre__icontains=search_query) | Q(descripcion__icontains=search_query))
     if precio_min:
         productos = productos.filter(precio__gte=precio_min)
     if precio_max:
         productos = productos.filter(precio__lte=precio_max)
 
-    # Obtener subcategorías si se selecciona una categoría
     subcategorias = Categoria.objects.filter(categoria_padre_id=categoria_id) if categoria_id else []
 
     # Ordenamiento
     orden = request.GET.get('orden', 'fechacreacion')
-    if orden == 'precio_asc':
-        productos = productos.order_by('precio')
-    elif orden == 'precio_desc':
-        productos = productos.order_by('-precio')
-    elif orden == 'nombre':
-        productos = productos.order_by('nombre')
-    else:
-        productos = productos.order_by('-fechacreacion')
+    ordering_map = {
+        'precio_asc': 'precio',
+        'precio_desc': '-precio',
+        'nombre': 'nombre',
+    }
+    productos = productos.order_by(ordering_map.get(orden, '-fechacreacion'))
 
     # Paginación
     paginator = Paginator(productos, 20)
@@ -142,7 +116,6 @@ def pagina_principal(request):
         'precio_min': precio_min,
         'precio_max': precio_max
     }
-    
     return render(request, 'productos/pagina_principal.html', context)
 
 
@@ -152,10 +125,7 @@ def detalle_producto(request, id):
     return render(request, 'productos/detalle_producto.html', {'producto': producto})
 
 def crear_carrito(user):
-    try:
-        carrito = Carrito.objects.get(usuario=user)
-    except Carrito.DoesNotExist:
-        carrito = Carrito.objects.create(usuario=user)
+    carrito, created = Carrito.objects.get_or_create(usuario=user)
     return carrito
 
 def agregar_carrito(request, producto_id):
@@ -167,66 +137,75 @@ def agregar_carrito(request, producto_id):
         carrito_item.save()
     return redirect('productos:ver_carrito')
 
-#Carrito Vista
-def ver_carrito(request):
-    carrito = get_object_or_404(Carrito, usuario=request.user)
-    carrito_items = CarritoItem.objects.filter(carrito=carrito)
-    tipos_arbol = TipoArbol.objects.all()
-    metodos_entrega = MetodoEntrega.objects.all()
-
+def calcular_totales(carrito_items, porcentaje_donacion, arbol_id, metodo_entrega_id):
     total_carrito = sum(item.cantidad * item.producto.precio for item in carrito_items)
-    
-    carrito_items_totales = [
-        {
-            'id': item.id,
-            'producto': item.producto,
-            'cantidad': item.cantidad,
-            'total_producto': item.cantidad * item.producto.precio
-        }
-        for item in carrito_items
-    ]
+    costo_arbol = TipoArbol.objects.filter(id=arbol_id).first().costo if arbol_id else 0
+    costo_envio = MetodoEntrega.objects.filter(id=metodo_entrega_id).first().costo if metodo_entrega_id else 0
+    total_donacion = total_carrito * Decimal(porcentaje_donacion) / Decimal(100)
 
-    if request.method == 'POST':
-        porcentaje_donacion = request.POST.get('porcentaje_donacion', '0')
-        metodo_entrega_id = request.POST.get('metodo_entrega', None)
-        
-        try:
-            porcentaje_donacion = int(porcentaje_donacion)
-        except ValueError:
-            porcentaje_donacion = 0
+    total = total_carrito + costo_arbol + costo_envio + total_donacion
+    return total, total_carrito, costo_arbol, costo_envio, total_donacion
 
-        arbol_id = request.POST.get('tipo_arbol')
-        costo_arbol = 0 
-        if arbol_id:
-            arbol = get_object_or_404(TipoArbol, id=arbol_id)
-            costo_arbol = arbol.costo
 
-        if metodo_entrega_id:
-            metodo_entrega = get_object_or_404(MetodoEntrega, id=metodo_entrega_id)
-            costo_envio = metodo_entrega.costo
-        else:
-            costo_envio = 0
 
-        total_donacion = total_carrito * Decimal(porcentaje_donacion) / Decimal(100)
-    else:
-        porcentaje_donacion = 0
-        total_donacion = 0
-        costo_arbol = 0
-        costo_envio = 0
+def ver_carrito(request):
+    usuario = request.user
+    carrito = get_object_or_404(Carrito, usuario=usuario)
+    carrito_items = CarritoItem.objects.filter(carrito=carrito)
+    # Inicialización de variables
+    total_carrito = 0
+    costo_envio = 0
+    total_donacion = 0
+    costo_arbol = 0
+    total_final = 0
 
-    total_con_arbol = total_carrito + costo_arbol + costo_envio
+    # Cálculo del total del carrito
+    for item in carrito_items:
+        total_carrito += item.producto.precio * item.cantidad
 
-    return render(request, 'productos/ver_carrito.html', {
-        'carrito_items': carrito_items_totales,
+    # Cálculo del costo de envío
+    metodo_envio_id = request.POST.get('metodo_entrega')
+    if metodo_envio_id:
+        metodo_envio = MetodoEntrega.objects.get(id=metodo_envio_id)
+        costo_envio = metodo_envio.costo
+
+    # Cálculo de la donación
+    porcentaje_donacion = int(request.POST.get('porcentaje_donacion', 0))
+    if porcentaje_donacion > 0:
+        total_donacion = (porcentaje_donacion / 100) * total_carrito
+
+    # Cálculo del costo del árbol
+    tipo_arbol_id = request.POST.get('tipo_arbol')
+    if tipo_arbol_id:
+        tipo_arbol = TipoArbol.objects.get(id=tipo_arbol_id)
+        costo_arbol = tipo_arbol.costo
+
+    # Cálculo del total final
+    total_final = total_carrito + costo_envio + total_donacion + costo_arbol
+
+    # Selección de Causa Ambiental
+    causa_ambiental_id = request.POST.get('causa_ambiental')
+    selected_causa_ambiental = None
+    if causa_ambiental_id:
+        selected_causa_ambiental = CausaAmbiental.objects.get(id=causa_ambiental_id)
+
+    # Contexto para pasar al template
+    contexto = {
+        'carrito_items': carrito_items,
         'total_carrito': total_carrito,
-        'total_con_arbol': total_con_arbol,
+        'costo_envio': costo_envio,
         'total_donacion': total_donacion,
-        'tipos_arbol': tipos_arbol,
-        'metodos_entrega': metodos_entrega,
-        'porcentaje_donacion': porcentaje_donacion,
         'costo_arbol': costo_arbol,
-        'costo_envio': costo_envio
-    })
+        'total_final': total_final,
+        'metodos_entrega': MetodoEntrega.objects.all(),
+        'tipos_arbol': TipoArbol.objects.all(),
+        'porcentaje_donacion': porcentaje_donacion,
+        'selected_arbol': tipo_arbol_id,
+        'causas_ambientales': CausaAmbiental.objects.all(),
+        'selected_causa_ambiental': selected_causa_ambiental,
+    }
+
+    return render(request, 'productos/ver_carrito.html', contexto)
 
 #Eliminar item del carrito
 def eliminar_item_carrito(request, item_id):
@@ -277,78 +256,180 @@ def buscar_productos(request):
     }
     return render(request, 'productos/buscar_productos.html', context)
 
+
 @login_required
-def checkout_vista(request):
-    carrito = get_object_or_404(Carrito, usuario=request.user)
-    carrito_items = CarritoItem.objects.filter(carrito=carrito)
+def ver_voucher(request, pedido_id):
+    pedido = get_object_or_404(Pedido, id=pedido_id, usuario=request.user)
+    
+    contexto = {
+        'pedido': pedido,
+    }
 
+    return render(request, 'productos/voucher.html', contexto)
+
+
+@login_required
+def generar_pedido(request):
     if request.method == 'POST':
-        form = CheckoutForm(request.POST)
-        if form.is_valid():
-            pedido = Pedido.objects.create(
-                usuario=request.user,
-                total=0,  
-                metodo_entrega=form.cleaned_data['metodo_entrega'],
-                direccion_entrega=form.cleaned_data['direccion_entrega'],
-                region_entrega=form.cleaned_data['region_entrega'],
-                comuna_entrega=form.cleaned_data['comuna_entrega'],
+        usuario = request.user
+        carrito = get_object_or_404(Carrito, usuario=usuario)
+
+        # Obtener los datos enviados en el POST
+        metodo_entrega_id = request.POST.get('metodo_entrega')
+        porcentaje_donacion = request.POST.get('porcentaje_donacion', 0)
+        tipo_arbol_id = request.POST.get('tipo_arbol')
+        causa_ambiental_id = request.POST.get('causa_ambiental')
+        total_final = request.POST.get('total_final')
+
+        # Validar método de entrega
+        if not metodo_entrega_id or not metodo_entrega_id.isdigit():
+            return JsonResponse({'success': False, 'message': 'Método de entrega inválido'})
+
+        metodo_entrega_id = int(metodo_entrega_id)
+
+        try:
+            metodo_entrega = MetodoEntrega.objects.get(id=metodo_entrega_id)
+        except MetodoEntrega.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Método de entrega no encontrado'})
+
+        # Validar que total_final no sea nulo o vacío
+        if total_final is None or total_final == '':
+            return JsonResponse({'success': False, 'message': 'El total final no es válido'})
+        
+        # Convierte total_final a Decimal
+        try:
+            total_final = Decimal(total_final)
+        except (ValueError, InvalidOperation):
+            return JsonResponse({'success': False, 'message': 'El total final no es un número válido'})
+
+        # Verifica que total_final no sea menor o igual a 0
+        if total_final <= 0:
+            return JsonResponse({'success': False, 'message': 'El total final debe ser mayor que 0'})
+
+        # Obtener dirección del usuario
+        direccion_usuario = usuario.direcciones.first()
+        if not direccion_usuario:
+            return JsonResponse({'success': False, 'message': 'El usuario no tiene direcciones registradas'})
+
+        # Crear Pedido
+        pedido = Pedido.objects.create(
+            usuario=usuario,
+            total=total_final,  
+            total_final=total_final,  
+            carrito=carrito,
+            monto_donacion=None,  
+            porcentaje_donacion=Decimal(porcentaje_donacion) if porcentaje_donacion.isdigit() else None,
+            apadrinamiento=None,  
+            metodo_entrega=metodo_entrega,
+            direccion_entrega=direccion_usuario,
+            region_entrega=direccion_usuario.comuna.region,
+            comuna_entrega=direccion_usuario.comuna,
+            estado='Pendiente'
+        )
+
+        # Crear Donacion si hay porcentaje de donación
+        donacion = None
+        if porcentaje_donacion and Decimal(porcentaje_donacion) > 0:
+            causa = None
+            if causa_ambiental_id and causa_ambiental_id.isdigit():
+                causa_ambiental_id = int(causa_ambiental_id)
+                try:
+                    causa = CausaAmbiental.objects.get(id=causa_ambiental_id)
+                except CausaAmbiental.DoesNotExist:
+                    return JsonResponse({'success': False, 'message': 'Causa ambiental no encontrada'})
+
+            donacion = Donacion.objects.create(
+                causa=causa,
+                monto=total_final * (Decimal(porcentaje_donacion) / Decimal(100)), 
+                porcentaje=Decimal(porcentaje_donacion),
+                pedido_donacion=pedido
             )
 
-            total_donacion = 0
-            if form.cleaned_data['causa_donacion']:
-                porcentaje = form.cleaned_data['porcentaje_donacion']
-                total_donacion = carrito_items.aggregate(
-                    total=Sum('cantidad' * 'producto__precio')
-                )['total'] or 0
-                total_donacion *= (porcentaje / 100)
-
-                donacion = Donacion.objects.create(
-                    pedido_donacion=pedido,
-                    causa=form.cleaned_data['causa_donacion'],
-                    monto=total_donacion,
-                    porcentaje=porcentaje,
-                )
-                pedido.monto_donacion = donacion
-
-            apadrinamiento = None
-            if form.cleaned_data['apadrinamiento']:
-                apadrinamiento = ApadrinamientoArbol.objects.create(
-                    usuario=request.user,
-                    tipo_arbol=form.cleaned_data['tipo_arbol'],
-                    latitud=form.cleaned_data['latitud'],
-                    longitud=form.cleaned_data['longitud'],
-                )
-                pedido.apadrinamiento = apadrinamiento
-
-            total_productos = carrito_items.aggregate(
-                total=Sum('cantidad' * 'producto__precio')
-            )['total'] or 0
-
-            costo_envio = calcular_costo_envio(
-                pedido.metodo_entrega,
-                pedido.region_entrega,
-                pedido.comuna_entrega
-            )
-
-            pedido.total = total_productos + total_donacion + costo_envio
+            pedido.monto_donacion = donacion
             pedido.save()
 
-            return redirect('productos:pedido_exitoso')
+        payment = crear_pago(pedido)
+        if payment:
+            for link in payment.links:
+                if link.rel == "approval_url":
+                    return HttpResponseRedirect(link.href)
 
+            return JsonResponse({'success': False, 'message': 'Error al crear el pago en PayPal'})
+
+    return JsonResponse({'success': False, 'message': 'Método de solicitud no permitido'})
+
+@login_required
+def confirmar_pago(request, pedido_id):
+    payer_id = request.GET.get('PayerID')
+    payment_id = request.GET.get('paymentId')
+
+    if not payer_id or not payment_id:
+        return JsonResponse({'success': False, 'message': 'No se proporcionaron datos válidos'})
+
+    pedido = get_object_or_404(Pedido, id=pedido_id, usuario=request.user)
+    payment = ejecutar_pago(payer_id, payment_id)
+
+    if payment and payment.state == "approved":
+        pedido.estado = 'Pagado'
+
+        for item in CarritoItem.objects.filter(carrito=pedido.carrito):
+            producto = item.producto
+            producto.stock -= item.cantidad 
+            producto.save()
+
+        pedido.save()
+        return redirect('productos:voucher', pedido_id=pedido.id)
     else:
-        form = CheckoutForm()
-        arbol_form = ApadrinamientoArbolForm()
-    return render(request, 'productos/checkout.html', {
-        'form': form,
-        'carrito_items': carrito_items,
-        'arbol_form': arbol_form,
-    })
+        return JsonResponse({'success': False, 'message': 'Error al confirmar el pago.'})
 
-def calcular_total_pedido(request):
-    total = pedido.carrito.products.aggregate(total=Sum('Precio'))['total'] or 0
-    if pedido.monto_donacion:
-        total += pedido.monto_donacion
-    costo_envio = calcular_costo_envio(pedido.region_entrega, pedido.comuna_entrega)
-    total += costo_envio
-    return total
+def eliminar_pedido(request, pedido_id):
+    try:
+        pedido = Pedido.objects.get(id=pedido_id, usuario=request.user)
+        pedido.delete()
+        return redirect('productos:lista_pedidos') 
+    except Pedido.DoesNotExist:
+        return redirect('productos:lista_pedidos')  
 
+@login_required
+def cancelar_pago(request):
+    return render(request, 'paypal/cancelar_pago.html')
+
+def mis_pedidos(request):
+    pedidos = Pedido.objects.filter(usuario=request.user)
+    return render(request, 'productos/mis_pedidos.html', {'pedidos': pedidos})
+
+@login_required
+def cancelar_pedido(request, pedido_id):
+    pedido = get_object_or_404(Pedido, id=pedido_id, usuario=request.user)
+    if request.method == 'POST':
+        pedido.estado = 'Cancelado'
+
+        for item in CarritoItem.objects.filter(carrito=pedido.carrito):
+            producto = item.producto
+            producto.stock += item.cantidad 
+            producto.save()
+
+        pedido.save()
+        return JsonResponse({'success': True, 'message': 'Pedido cancelado con éxito.'})
+    return JsonResponse({'success': False, 'message': 'Método no permitido.'})
+
+
+def productos_vendidos(request):
+    # Obtén el ID del usuario actual
+    usuario_id = request.user.usuarioid  # Asegúrate de que esto coincida con tu modelo de usuario
+
+    # Llama al procedimiento almacenado
+    with connection.cursor() as cursor:
+        cursor.callproc('generar_informe_productos_vendidos', [usuario_id])
+
+    # Obtener los resultados de la tabla temporal
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM productos_vendidos_temp")
+        resultados = cursor.fetchall()
+
+    # Procesar los resultados en un formato más amigable
+    context = {
+        'resultados': resultados
+    }
+
+    return render(request, 'productos/productos_vendidos.html', context)

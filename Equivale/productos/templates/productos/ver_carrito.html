@@ -46,7 +46,7 @@
         
         <div class="mt-6">
             <h4 class="text-xl font-semibold text-[#69620e]">Método de Entrega</h4>
-            <form method="post" action="#" class="bg-white p-4 rounded-lg shadow-md mt-2">
+            <form id="form-generar-pedido" method="post" action="{% url 'productos:generar_pedido'%}" class="bg-white p-4 rounded-lg shadow-md mt-2">
                 {% csrf_token %}
                 <div class="mb-4">
                     <label for="metodo_entrega" class="block text-sm font-medium text-gray-700">Seleccionar Método de Entrega</label>
@@ -70,9 +70,20 @@
                     </select>
                 </div>
 
+                <label for="causa_ambiental" class="block text-sm font-medium text-gray-700">Selecciona una causa ambiental</label>
+                <select name="causa_ambiental" id="causa_ambiental" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                    <option value="">-- Selecciona una causa --</option>
+                    {% for causa in causas_ambientales %}
+                        <option value="{{ causa.id }}" {% if causa.id == selected_causa_ambiental.id %}selected{% endif %}>
+                            {{ causa.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+
                 <h4 class="text-xl font-semibold text-[#69620e]">Tipos de Árboles (Opcional)</h4>
                 <div class="mb-4">
                     <label for="tipo_arbol" class="block text-sm font-medium text-gray-700">Seleccionar Tipo de Árbol</label>
+
                     <select class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" name="tipo_arbol" id="tipo_arbol">
                         <option value="">No Apadrinar</option> 
                         {% for arbol in tipos_arbol %}
@@ -84,18 +95,22 @@
                 </div>
 
                 <h2 class="text-xl font-bold text-[#69620e]">Total Carrito: $<span id="total_carrito">{{ total_carrito }}</span></h2>
-                <h4 class="text-lg font-semibold text-[#69620e]">Total Envío: $<span id="costo_envio">{{ costo_envio }}</span></h4>
+                <h4 class="text-lg font-semibold text-[#69620e]">Total Envío: <span id="costo_envio">{{ costo_envio }}</span></h4>
                 <h3 class="text-lg font-semibold text-[#69620e]">Total Donación: $<span id="total_donacion">{{ total_donacion }}</span></h3>
-                <h4 id="costo_arbol_section" class="text-lg font-semibold text-[#69620e] hidden">Costo del Árbol: $<span id="costo_arbol">{{ costo_arbol }}</span></h4>
+                <h4 id="costo_arbol_section" class="text-lg font-semibold text-[#69620e] hidden">Costo del Árbol: <span id="costo_arbol">{{ costo_arbol }}</span></h4>
                 <h5 class="text-lg font-semibold text-[#69620e]">Total Final (Carrito + Árbol + Envío): $<span id="total_con_arbol">{{ total_con_arbol }}</span></h5>
 
-                <button type="submit" class="mt-4 w-full bg-[#69620e] hover:bg-[#75735A] text-white font-bold py-2 px-4 rounded">Proceder a la Compra</button>
+                <!-- Datos ocultos que enviarán la información al backend -->
+                <input type="hidden" name="total_final" value="{{ total_final }}">
+                <input type="hidden" name="porcentaje_donacion" value="{{ porcentaje_donacion }}">
+                <input type="hidden" name="tipo_arbol" value="{{ tipo_arbol_id }}">
+                <input type="hidden" name="causa_ambiental" value="{{ causa_ambiental_id }}">
+
+                <button type="submit" class="mt-4 w-full bg-[#69620e] hover:bg-[#75735A] text-white font-bold py-2 px-4 rounded">Finalizar Compra</button>
             </form>
         </div>
-
     {% else %}
-        <p class="mt-4 text-lg">No tienes productos en el carrito.</p>
-        <a href="{% url 'productos:pagina_principal' %}" class="mt-4 inline-block bg-[#69620e] text-white font-bold py-2 px-4 rounded hover:bg-[#75735A]">Volver a Comprar</a>
+        <p class="text-center text-gray-500">Tu carrito está vacío.</p>
     {% endif %}
 </div>
 
@@ -142,7 +157,6 @@
         function actualizarCarrito(form, cantidad) {
             const url = form.action;
             const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
-
             fetch(url, {
                 method: 'POST',
                 headers: {
@@ -184,6 +198,11 @@
 
             const totalConArbol = totalCarrito + costoArbol + costoEnvio;
             totalConArbolSpan.textContent = totalConArbol.toFixed(2);
+
+            document.querySelector('input[name="total_final"]').value = totalConArbol.toFixed(2);
+            document.querySelector('input[name="porcentaje_donacion"]').value = porcentajeDonacion;
+            document.querySelector('input[name="tipo_arbol"]').value = tipoArbolSelect.value;
+            document.querySelector('input[name="causa_ambiental"]').value = document.getElementById('causa_ambiental').value;
         }
 
         function calcularDonacion(total, porcentaje) {
@@ -199,6 +218,7 @@
             const metodoSeleccionado = metodoEntregaSelect.options[metodoEntregaSelect.selectedIndex];
             return metodoSeleccionado ? parseFloat(metodoSeleccionado.getAttribute('data-costo')) : 0;
         }
+        
 
         function actualizarSeccionArbol(costoArbol) {
             if (costoArbol > 0) {
@@ -208,6 +228,41 @@
             }
             costoArbolSpan.textContent = costoArbol.toFixed(2);
         }
+        
+        function enviarCantidadAlBackend(form, nuevaCantidad) {
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: new URLSearchParams(new FormData(form))
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Actualizar el total en la tabla si es necesario
+                    const totalProducto = form.closest('tr').querySelector('.total-producto');
+                    totalProducto.querySelector('span').textContent = data.total_producto;
+                    
+                    // Actualizar el total carrito, envío y donación si es necesario
+                    document.getElementById('total_carrito').textContent = data.total_carrito;
+                    document.getElementById('total_donacion').textContent = data.total_donacion;
+                    document.getElementById('total_con_arbol').textContent = data.total_final;
+                    
+                    if (data.costo_arbol) {
+                        document.getElementById('costo_arbol_section').classList.remove('hidden');
+                        document.getElementById('costo_arbol').textContent = data.costo_arbol;
+                    } else {
+                        document.getElementById('costo_arbol_section').classList.add('hidden');
+                    }
+                } else {
+                    console.error('Error al actualizar la cantidad del producto');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
     });
 </script>
+
 {% endblock %}

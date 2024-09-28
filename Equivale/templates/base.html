@@ -34,6 +34,8 @@
                     <a href="{% url 'productos:ver_carrito'%}" class="text-white hidden md:block">Carrito</a>
                     <a href="{% url 'cuentas:perfil'%}" class="text-white hidden md:block">Perfil</a>
                     <a href="{% url 'productos:listar_productos'%}" class="text-white hidden md:block">Mis Productos</a>
+                    <a href="{% url 'productos:mis_pedidos'%}" class="text-white hidden md:block">Mis Compras</a>
+                    <a href="{% url 'productos:productos_vendidos'%}" class="text-white hidden md:block">Mis Ventas</a>
                     <a href="{% url 'cuentas:logout'%}" class="text-white hidden md:block">Cerrar sesión</a>
                 {% else %}
                     <a href="{% url 'cuentas:login' %}" class="text-white hidden md:block">Iniciar sesión</a>
