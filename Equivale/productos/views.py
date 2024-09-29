@@ -415,21 +415,11 @@ def cancelar_pedido(request, pedido_id):
 
 
 def productos_vendidos(request):
-    # Obtén el ID del usuario actual
-    usuario_id = request.user.usuarioid  # Asegúrate de que esto coincida con tu modelo de usuario
-
-    # Llama al procedimiento almacenado
+    usuario_id = request.user.usuarioid
     with connection.cursor() as cursor:
-        cursor.callproc('generar_informe_productos_vendidos', [usuario_id])
-
-    # Obtener los resultados de la tabla temporal
+        cursor.callproc('generar_informe_ventas_usuario', [usuario_id])
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM productos_vendidos_temp")
+        cursor.execute("SELECT * FROM ventas_usuario_temp")
         resultados = cursor.fetchall()
+    return render(request, 'productos/productos_vendidos.html', {'resultados': resultados})
 
-    # Procesar los resultados en un formato más amigable
-    context = {
-        'resultados': resultados
-    }
-
-    return render(request, 'productos/productos_vendidos.html', context)
