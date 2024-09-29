@@ -416,10 +416,18 @@ def cancelar_pedido(request, pedido_id):
 
 def productos_vendidos(request):
     usuario_id = request.user.usuarioid
+    print(usuario_id)
     with connection.cursor() as cursor:
         cursor.callproc('generar_informe_ventas_usuario', [usuario_id])
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM ventas_usuario_temp")
+        cursor.execute("SELECT * FROM ventas_usuario")
         resultados = cursor.fetchall()
+    print(resultados)
     return render(request, 'productos/productos_vendidos.html', {'resultados': resultados})
 
+
+#funcion para borrar todos los pedidos
+
+def borrar_pedidos(request):
+    Pedido.objects.filter(all)
+    return redirect('mis_pedidos')

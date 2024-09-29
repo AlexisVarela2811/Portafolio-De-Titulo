@@ -14,6 +14,7 @@
                     <table class="min-w-full bg-white rounded-lg shadow-lg">
                         <thead>
                             <tr class="bg-[#69620e] text-white">
+                                <th class="py-3 px-4 text-left">ID</th>
                                 <th class="py-3 px-4 text-left">Nombre</th>
                                 <th class="py-3 px-4 text-left">Descripción</th>
                                 <th class="py-3 px-4 text-left">Precio</th>
@@ -25,6 +26,7 @@
                         <tbody>
                             {% for producto in productos %}
                             <tr class="hover:bg-[#e1e0d9]">
+                                <td class="py-3 px-4 text-[#75735A] text-left">{{ producto.id }}</td>
                                 <td class="py-3 px-4 text-[#75735A] text-left">{{ producto.nombre }}</td>
                                 <td class="py-3 px-4 text-[#75735A] text-left">{{ producto.descripcion }}</td>
                                 <td class="py-3 px-4 text-[#75735A] text-left">${{ producto.precio }}</td>
