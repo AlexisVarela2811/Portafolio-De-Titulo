@@ -3,20 +3,17 @@
 {% block title %}Listado de Productos{% endblock %}
 
 {% block content %}
-<div class="flex flex-col md:flex-row">
+<div id="pagina-principal" class="flex flex-col md:flex-row">
     <!-- Filtro por Categoría -->
-    <div class="w-full md:w-1/4 p-4">
-        <h2 class="text-xl font-bold mb-4">Filtrar por Categoría</h2>
+    <div class="main-filtro w-full md:w-1/4 p-4">
         <form method="get" action="{% url 'productos:pagina_principal' %}">
             <div class="mb-4">
-                <h3 class="font-semibold">Categorías</h3>
-                <ul class="space-y-2">
+                <h3 class="pb-3">Categorías</h3>
+                <ul class="category-selector">
                     {% for categoria in categorias %}
                         <li>
-                            <label class="flex items-center">
-                                <input type="radio" name="categoria" value="{{ categoria.id }}" {% if categoria_id == categoria.id %}checked{% endif %} class="mr-2">
-                                {{ categoria.nombre }}
-                            </label>
+                            <input id="cat-{{categoria.id}}" type="radio" name="categoria" value="{{ categoria.id }}" {% if categoria_id == categoria.id %}checked{% endif %} class="hidden mr-2">
+                            <label for="cat-{{categoria.id}}" class="category-label block py-1 px-2">{{ categoria.nombre }}</label>
                         </li>
                     {% endfor %}
                 </ul>
@@ -24,20 +21,20 @@
 
             <!-- Filtro por Precios -->
             <div class="mb-4">
-                <h3 class="font-semibold">Filtrar por Precio</h3>
-                <label class="flex items-center">
-                    Mínimo:
-                    <input type="number" name="precio_min" value="{{ precio_min }}" class="ml-2 border rounded p-1" placeholder="0">
-                </label>
-                <label class="flex items-center mt-2">
-                    Máximo:
-                    <input type="number" name="precio_max" value="{{ precio_max }}" class="ml-2 border rounded p-1" placeholder="0">
-                </label>
+                <h3 class="pb-2">Precio</h3>
+                <div class="flex justify-between">
+                    <label for="precio_min" class="flex items-center">Desde</label>
+                    <input type="number" class="filtro-precio ml-2 py-1" id="precio_min" name="precio_min" value="{{ precio_min }}" placeholder="0">
+                </div>
+                <div class="flex justify-between">
+                    <label for="precio_max" class="flex items-center pt-2">Hasta</label>
+                    <input type="number" class="filtro-precio ml-2 py-1" id="precio_max" name="precio_max" value="{{ precio_max }}" placeholder="0">
+                </div>
             </div>
 
             {% if subcategorias %}
             <div class="mb-4">
-                <h3 class="font-semibold">Subcategorías</h3>
+                <h3 class="py-3">Subcategorías</h3>
                 <ul class="space-y-2">
                     {% for subcategoria in subcategorias %}
                         <li>
@@ -55,22 +52,22 @@
 
             <!-- Botones de Ordenamiento -->
             <div class="mb-4">
-                <h3 class="font-semibold">Ordenar por Precio</h3>
-                <div class="flex space-x-2">
-                    <button type="submit" name="orden" value="precio_asc" class="bg-[#69620e] text-white py-1 px-3 rounded">Precio Ascendente</button>
-                    <button type="submit" name="orden" value="precio_desc" class="bg-[#69620e] text-white py-1 px-3 rounded">Precio Descendente</button>
+                <h3 class="py-3">Ordenar por Precio</h3>
+                <div class="flex flex-col">
+                    <button type="submit" name="orden" value="precio_asc" class="btn btn-claro">Precio Ascendente</button>
+                    <button type="submit" name="orden" value="precio_desc" class="btn btn-claro">Precio Descendente</button>
                 </div>
             </div>
 
-            <button type="submit" class="mt-4 bg-[#69620e] text-white py-2 px-4 rounded">Aplicar Filtros</button>
+            <button type="submit" class="btn">Aplicar Filtros</button>
         </form>
     </div>
     
     <!-- Listado de Productos -->
-    <div class="flex-grow p-4">
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+    <div class="flex-grow pl-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             {% for producto in productos %}
-                <div class="bg-[#75735A] rounded-lg flex flex-col items-center justify-center p-4 relative shadow-lg transition-all duration-300 hover:bg-[#69620e]">
+                <div class="flex flex-col items-center justify-center p-3 relative shadow-lg transition-all duration-300">
                     <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="w-32 h-32 object-cover rounded-full mb-2">
                     <p class="font-semibold text-black tracking-wider text-lg">{{ producto.nombre }}</p>
                     <p class="font-semibold text-gray-600 text-xs">{{ producto.descripcion }}</p>
@@ -79,10 +76,10 @@
                         {% if user.is_authenticated %}
                             <form action="{% url 'productos:agregar_carrito' producto.id %}" method="post" class="w-full">
                                 {% csrf_token %}
-                                <button type="submit" class="bg-[#69620e] text-white py-2 px-4 rounded-full shadow hover:bg-opacity-80 w-full">Agregar al Carrito</button>
+                                <button type="submit" class="btn">Agregar al Carrito</button>
                             </form>
                         {% else %}
-                            <a href="{% url 'cuentas:login' %}" class="bg-[#69620e] text-white py-2 px-4 rounded-full shadow hover:bg-opacity-80 w-full text-center">Agregar al Carrito</a>
+                            <a href="{% url 'cuentas:login' %}" class="btn">Agregar al Carrito</a>
                         {% endif %}
                     </div>
                     <ul class="mt-2 text-sm text-gray-600">

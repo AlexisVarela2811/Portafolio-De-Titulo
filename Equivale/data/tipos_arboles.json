@@ -1,26 +1,32 @@
 [
     {
         "nombre": "Araucaria",
-        "descripcion": "Árbol emblemático de Chile, conocido como 'pehuén', con hojas en forma de aguja."
+        "descripcion": "Árbol emblemático de Chile, conocido como 'pehuén', con hojas en forma de aguja.",
+        "costo": 500
     },
     {
         "nombre": "Lenga",
-        "descripcion": "Árbol de la Patagonia, apreciado por su madera y su belleza en el paisaje."
+        "descripcion": "Árbol de la Patagonia, apreciado por su madera y su belleza en el paisaje.",
+        "costo": 500
     },
     {
         "nombre": "Coihue",
-        "descripcion": "Árbol robusto que crece en el sur de Chile, con un tronco recto y hojas perennes."
+        "descripcion": "Árbol robusto que crece en el sur de Chile, con un tronco recto y hojas perennes.",
+        "costo": 500
     },
     {
         "nombre": "Alerce",
-        "descripcion": "Uno de los árboles más longevos del mundo, con una madera muy resistente."
+        "descripcion": "Uno de los árboles más longevos del mundo, con una madera muy resistente.",
+        "costo": 500
     },
     {
         "nombre": "Quillay",
-        "descripcion": "Árbol pequeño a mediano, conocido por su corteza y sus propiedades medicinales."
+        "descripcion": "Árbol pequeño a mediano, conocido por su corteza y sus propiedades medicinales.",
+        "costo": 500
     },
     {
         "nombre": "Boldo",
-        "descripcion": "Árbol característico de la zona central, famoso por sus hojas aromáticas y medicinales."
+        "descripcion": "Árbol característico de la zona central, famoso por sus hojas aromáticas y medicinales.",
+        "costo": 500
     }
 ]

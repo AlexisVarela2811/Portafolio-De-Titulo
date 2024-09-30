@@ -5,22 +5,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Equivale{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=SUSE:wght@100..800;DM+Serif+Text:ital@0;1&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
+    <style type="text/tailwindcss">
+        {% include 'assets/css/style.css' %}
+    </style>
 </head>
-<body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
+<body class="¿flex flex-col min-h-screen">
     <!-- Navbar -->
-    <nav class="bg-[#75735A] p-4">
-        <div class="container mx-auto flex justify-between items-center">
-            <div class="flex items-center">
-                <a href="{% url 'productos:pagina_principal'%}">
-                    <img src="{% static 'img/logo.png' %}" alt="Logo" class="h-10 mr-2">
-                </a>
-                <span class="text-white font-bold text-xl">Equivale</span>
+    <nav id="main-nav">
+        <div class="container mx-auto flex justify-between">
+            <div class="main-nav-logo flex">
+                    <a href="{% url 'productos:pagina_principal'%}" class="flex items-center mr-8">
+                    {% include 'assets/svg/logo.svg' %}
+                    <h1 class="hidden md:block ml-3">Equivale</h1>
+                    </a>
             </div>
-            <div class="hidden md:flex flex-grow justify-center mx-4">
-                <form method="get" action="{% url 'productos:buscar_productos' %}" class="flex items-center w-5/12">
-                    <input type="text" name="query" placeholder="Buscar..." class="p-2 rounded-l-md focus:outline-none bg-white text-[#75735A] w-80 md:w-96 lg:w-full">
-                    <button type="submit" class="bg-white text-[#75735A] p-2 rounded-r-md">
+            <div class="main-nav-search flex flex-grow">
+                <form method="get" action="{% url 'productos:buscar_productos' %}" class="flex flex-grow relative">
+                    <input type="text" name="query" placeholder="Buscar..." class="px-3 py-1 focus:outline-none pr-10 flex flex-grow">
+                    <button type="submit" class="absolute right-0 top-0 mt-1 mr-3" aria-label="Buscar">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" stroke="#75735A" fill="none" stroke-linecap="round" stroke-linejoin="round">
                             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                             <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
@@ -28,20 +36,55 @@
                         </svg>
                     </button>
                 </form>
+                
             </div>
-            <div class="flex items-center space-x-4">
+            <div class="main-nav-items flex">
                 {% if user.is_authenticated %}
-                    <a href="{% url 'productos:ver_carrito'%}" class="text-white hidden md:block">Carrito</a>
-                    <a href="{% url 'cuentas:perfil'%}" class="text-white hidden md:block">Perfil</a>
-                    <a href="{% url 'productos:listar_productos'%}" class="text-white hidden md:block">Mis Productos</a>
-                    <a href="{% url 'productos:mis_pedidos'%}" class="text-white hidden md:block">Mis Compras</a>
-                    <a href="{% url 'productos:productos_vendidos'%}" class="text-white hidden md:block">Mis Ventas</a>
-                    <a href="{% url 'cuentas:logout'%}" class="text-white hidden md:block">Cerrar sesión</a>
+                    <a href="{% url 'productos:ver_carrito'%}" class="main-nav-item-link flex items-center">{% include 'assets/svg/icon-carrito.svg' %}
+                    </a>
+                    <a class="main-nav-item-link hidden md:flex" data-dropdown-toggle="main-nav-profile-dropdown" data-dropdown-trigger="hover">
+                        <p class="main-nav-item-text">Hola, {{ user }}</p>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 0 1 10 10a10 10 0 0 1-10 10A10 10 0 0 1 2 12A10 10 0 0 1 12 2m-5 8l5 5l5-5z"/></svg>
+                    </a>
+                    <div id="main-nav-profile-dropdown" class="nav-dropdown hidden z-10 shadow">
+                        <ul class="text-sm" aria-labelledby="dropdownDefaultButton">
+                            <li>
+                                <a href="{% url 'cuentas:perfil' %}" class="block main-nav-item-link">
+                                    {% include 'assets/svg/icon-perfil.svg' %}
+                                    <p class="main-nav-item-text">Mi perfil</p>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'productos:mis_pedidos'%}" class="block main-nav-item-link">
+                                    {% include 'assets/svg/icon-compras.svg' %}
+                                    <p class="main-nav-item-text">Mis compras</p>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'productos:productos_vendidos'%}" class="block main-nav-item-link">
+                                    {% include 'assets/svg/icon-ventas.svg' %}
+                                    <p class="main-nav-item-text">Mis ventas</p>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'productos:listar_productos'%}" class="block main-nav-item-link">
+                                    {% include 'assets/svg/icon-tienda.svg' %}
+                                    <p class="main-nav-item-text">Mi tienda</p>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'cuentas:logout'%}" class="block main-nav-item-link">
+                                    {% include 'assets/svg/icon-logout.svg' %}
+                                    <p class="main-nav-item-text">Cerrar sesión</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 {% else %}
                     <a href="{% url 'cuentas:login' %}" class="text-white hidden md:block">Iniciar sesión</a>
                     <a href="{% url 'cuentas:registro' %}" class="text-white hidden md:block">Registrarse</a>
                 {% endif %}
-                <div class="md:hidden">
+                <div class="flex items-center md:hidden">
                     <button id="menu-toggle" class="text-white focus:outline-none">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
