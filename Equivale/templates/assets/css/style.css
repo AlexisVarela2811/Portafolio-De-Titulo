@@ -160,3 +160,28 @@ nav#main-nav {
     max-width: 6em;
     padding: 0;
 }
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--gris);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--verde4);
+    border-radius: 5px;
+    transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--verde5);
+}
+
+/* Para Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--verde4) var(--gris);
+}
