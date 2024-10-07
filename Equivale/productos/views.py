@@ -1,3 +1,4 @@
+# Importaciones necesarias
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
@@ -7,6 +8,7 @@ from django.views.decorators.http import require_POST
 from django.db import connection
 from decimal import Decimal
 
+# Importaciones de modelos y formularios
 from .models import (
     Categoria, Producto, Carrito, CarritoItem, Pedido, Donacion,
     ApadrinamientoArbol, TipoArbol, MetodoEntrega, CausaAmbiental
@@ -16,6 +18,7 @@ from .paypal import crear_pago, ejecutar_pago
 
 @login_required
 def obtener_subcategorias(request):
+    """Obtiene las subcategorías de una categoría padre."""
     categoria_padre_id = request.GET.get('categoria_padre_id')
     subcategorias = Categoria.objects.filter(categoria_padre_id=categoria_padre_id) if categoria_padre_id else []
     subcategorias_data = [{'id': sub.id, 'nombre': sub.nombre} for sub in subcategorias]
@@ -23,6 +26,7 @@ def obtener_subcategorias(request):
 
 @login_required
 def gestionar_productos(request, id=None):
+    """Gestiona la creación y edición de productos."""
     producto = get_object_or_404(Producto, id=id) if id else None
     form = ProductoForm(request.POST or None, request.FILES or None, instance=producto)
 
@@ -42,11 +46,13 @@ def gestionar_productos(request, id=None):
 
 @login_required
 def listar_productos(request):
+    """Lista los productos creados por el usuario."""
     productos = Producto.objects.filter(creador=request.user)
     return render(request, 'productos/listar_productos.html', {'productos': productos})
 
 @login_required
 def eliminar_producto(request, id):
+    """Elimina un producto específico."""
     producto = get_object_or_404(Producto, id=id)
     if request.method == 'POST':
         producto.delete()
@@ -54,9 +60,11 @@ def eliminar_producto(request, id):
     return render(request, 'productos/eliminar_confirmar.html', {'producto': producto})
 
 def pagina_principal(request):
+    """Muestra la página principal con productos filtrados y paginados."""
     productos = Producto.objects.all().select_related('categoria', 'subcategoria', 'creador')
     categorias = Categoria.objects.filter(categoria_padre__isnull=True)
 
+    # Aplicar filtros
     filtros = {
         'categoria_id': request.GET.get('categoria'),
         'subcategoria_id__in': request.GET.getlist('subcategoria'),
@@ -68,6 +76,7 @@ def pagina_principal(request):
     
     productos = productos.filter(**{k: v for k, v in filtros.items() if v})
 
+    # Ordenar productos
     orden = request.GET.get('orden', 'fechacreacion')
     ordering_map = {
         'precio_asc': 'precio',
@@ -77,6 +86,7 @@ def pagina_principal(request):
     }
     productos = productos.order_by(ordering_map.get(orden, '-fechacreacion'))
 
+    # Paginación
     paginator = Paginator(productos, 20)
     page = request.GET.get('page')
     try:
@@ -96,13 +106,16 @@ def pagina_principal(request):
     return render(request, 'productos/pagina_principal.html', context)
 
 def detalle_producto(request, id):
+    """Muestra los detalles de un producto específico."""
     producto = get_object_or_404(Producto, id=id)
     return render(request, 'productos/detalle_producto.html', {'producto': producto})
 
 def crear_carrito(user):
+    """Crea o obtiene el carrito del usuario."""
     return Carrito.objects.get_or_create(usuario=user)[0]
 
 def agregar_carrito(request, producto_id):
+    """Agrega un producto al carrito del usuario."""
     producto = get_object_or_404(Producto, id=producto_id)
     carrito = crear_carrito(request.user)
     carrito_item, created = CarritoItem.objects.get_or_create(carrito=carrito, producto=producto)
@@ -112,6 +125,7 @@ def agregar_carrito(request, producto_id):
     return redirect('productos:ver_carrito')
 
 def calcular_totales(carrito_items, porcentaje_donacion, arbol_id, metodo_entrega_id):
+    """Calcula los totales del carrito incluyendo donaciones y costos adicionales."""
     total_carrito = sum(item.cantidad * item.producto.precio for item in carrito_items)
     costo_arbol = TipoArbol.objects.filter(id=arbol_id).first().costo if arbol_id else 0
     costo_envio = MetodoEntrega.objects.filter(id=metodo_entrega_id).first().costo if metodo_entrega_id else 0
@@ -121,6 +135,7 @@ def calcular_totales(carrito_items, porcentaje_donacion, arbol_id, metodo_entreg
     return total, total_carrito, costo_arbol, costo_envio, total_donacion
 
 def ver_carrito(request):
+    """Muestra el contenido del carrito del usuario."""
     carrito = get_object_or_404(Carrito, usuario=request.user)
     carrito_items = CarritoItem.objects.filter(carrito=carrito)
     
@@ -152,12 +167,14 @@ def ver_carrito(request):
     return render(request, 'productos/ver_carrito.html', contexto)
 
 def eliminar_item_carrito(request, item_id):
+    """Elimina un item específico del carrito."""
     carrito_item = get_object_or_404(CarritoItem, id=item_id)
     carrito_item.delete()
     return redirect('productos:ver_carrito')
 
 @require_POST
 def actualizar_cantidad(request, item_id):
+    """Actualiza la cantidad de un item en el carrito."""
     cantidad = int(request.POST.get('cantidad', 1))
     try:
         carrito_item = CarritoItem.objects.get(id=item_id)
@@ -178,6 +195,7 @@ def actualizar_cantidad(request, item_id):
         return JsonResponse({'success': False, 'error': 'Item no encontrado'})
 
 def buscar_productos(request):
+    """Busca productos basados en un término de búsqueda."""
     form = SearchForm(request.GET or None)
     productos = Producto.objects.all()
 
@@ -197,11 +215,13 @@ def buscar_productos(request):
 
 @login_required
 def ver_voucher(request, pedido_id):
+    """Muestra el voucher de un pedido específico."""
     pedido = get_object_or_404(Pedido, id=pedido_id, usuario=request.user)
     return render(request, 'productos/voucher.html', {'pedido': pedido})
 
 @login_required
 def generar_pedido(request):
+    """Genera un nuevo pedido basado en el carrito del usuario."""
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método de solicitud no permitido'})
 
@@ -263,6 +283,7 @@ def generar_pedido(request):
 
 @login_required
 def confirmar_pago(request, pedido_id):
+    """Confirma el pago de un pedido."""
     payer_id = request.GET.get('PayerID')
     payment_id = request.GET.get('paymentId')
 
@@ -287,21 +308,25 @@ def confirmar_pago(request, pedido_id):
 
 @login_required
 def eliminar_pedido(request, pedido_id):
+    """Elimina un pedido específico."""
     pedido = get_object_or_404(Pedido, id=pedido_id, usuario=request.user)
     pedido.delete()
     return redirect('productos:lista_pedidos')
 
 @login_required
 def cancelar_pago(request):
+    """Maneja la cancelación de un pago."""
     return render(request, 'paypal/cancelar_pago.html')
 
 @login_required
 def mis_pedidos(request):
+    """Muestra los pedidos del usuario."""
     pedidos = Pedido.objects.filter(usuario=request.user)
     return render(request, 'productos/mis_pedidos.html', {'pedidos': pedidos})
 
 @login_required
 def cancelar_pedido(request, pedido_id):
+    """Cancela un pedido específico."""
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido.'})
 
@@ -318,6 +343,7 @@ def cancelar_pedido(request, pedido_id):
 
 @login_required
 def productos_vendidos(request):
+    """Genera un informe de ventas para el usuario."""
     usuario_id = request.user.usuarioid
     with connection.cursor() as cursor:
         cursor.callproc('generar_informe_ventas_usuario', [usuario_id])
@@ -327,5 +353,6 @@ def productos_vendidos(request):
 
 @login_required
 def borrar_pedidos(request):
+    """Borra todos los pedidos (función de administración)."""
     Pedido.objects.all().delete()
     return redirect('mis_pedidos')
