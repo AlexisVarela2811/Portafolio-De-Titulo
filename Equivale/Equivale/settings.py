@@ -89,6 +89,8 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 #OAuth
                 'social_django.context_processors.backends',
+                'cuentas.context_processors.nombre_usuario',
+                'productos.context_processors.format_precio',
             ],
         },
     },

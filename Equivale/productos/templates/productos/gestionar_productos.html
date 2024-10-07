@@ -3,87 +3,79 @@
 {% block title %}{% if editing %}Editar{% else %}Crear{% endif %} Producto{% endblock %}
 
 {% block content %}
-<header class="bg-gradient-to-r from-[#69620e] to-[#75735A] text-white p-6 shadow-lg">
-    <h1 class="text-2xl font-bold">Gestión de Productos</h1>
-</header>
 
-<main class="p-6 bg-gray-100">
-    <section class="bg-white shadow-2xl rounded-lg p-8 max-w-2xl mx-auto">
-        <h2 class="text-3xl font-bold mb-6 text-[#75735A] border-b-2 border-[#69620e] pb-2">{% if editing %}Editar{% else %}Crear{% endif %} Producto</h2>
-
-        <form method="post" enctype="multipart/form-data" class="space-y-6">
-            {% csrf_token %}
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="id_categoria" class="block text-sm font-medium text-[#75735A]">Categoría:</label>
-                    <select id="id_categoria" name="categoria" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[#69620e] focus:border-[#69620e] rounded-md shadow-sm">
-                        <option value="">Seleccione una categoría</option>
-                        {% for categoria in categorias %}
-                            <option value="{{ categoria.id }}" {% if editing and form.instance.categoria.id == categoria.id %}selected{% endif %}>
-                                {{ categoria.nombre }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div>
-                    <label for="id_subcategoria" class="block text-sm font-medium text-[#75735A]">Subcategoría:</label>
-                    <select id="id_subcategoria" name="subcategoria" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[#69620e] focus:border-[#69620e] rounded-md shadow-sm">
-                        <option value="">Seleccione una subcategoría</option>
-                        {% if editing %}
-                            {% for subcategoria in form.subcategoria.queryset %}
-                                <option value="{{ subcategoria.id }}" {% if form.instance.subcategoria.id == subcategoria.id %}selected{% endif %}>
-                                    {{ subcategoria.nombre }}
-                                </option>
-                            {% endfor %}
-                        {% endif %}
-                    </select>
-                </div>
+<div class="container main-content w-100">
+    <h2>{% if editing %}Editar{% else %}Crear{% endif %} producto</h2>
+    
+    <hr class="my-8">
+    
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+        <div class="flex items-center">
+            <label for="id_categoria" class="edit-label">Categoría</label>
+            <select id="id_categoria" name="categoria" class="rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                <option value="">Seleccione una categoría</option>
+                {% for categoria in categorias %}
+                <option value="{{ categoria.id }}" {% if editing and form.instance.categoria.id == categoria.id %}selected{% endif %}>
+                    {{ categoria.nombre }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="flex items-center">
+            <label for="id_subcategoria" class="edit-label">Subcategoría</label>
+            <select id="id_subcategoria" name="subcategoria" class="rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                <option value="">Seleccione una subcategoría</option>
+                {% if editing %}
+                    {% for subcategoria in form.subcategoria.queryset %}
+                        <option value="{{ subcategoria.id }}" {% if form.instance.subcategoria.id == subcategoria.id %}selected{% endif %}>
+                            {{ subcategoria.nombre }}
+                        </option>
+                    {% endfor %}
+                {% endif %}
+            </select>
+        </div>
+        <div class="flex items-center">
+            <label for="id_nombre" class="edit-label">Nombre del Producto</label>
+            <input type="text" id="id_nombre" name="nombre" value="{{ form.instance.nombre }}" class="w-full rounded-md border border-gray-100 shadow-sm" required>
+        </div>
+        
+        <div class="flex items-center">
+            <label for="id_descripcion" class="edit-label">Descripción</label>
+            <textarea id="id_descripcion" name="descripcion" class="w-full rounded-md border border-gray-100 shadow-sm" rows="3" required>{{ form.instance.descripcion }}</textarea>
+        </div>
+        
+        <div class="flex items-center justify-between">
+            <div class="pr-4">
+                <label for="id_marca" class="edit-label pb-2 block">Marca</label>
+                <input type="text" id="id_marca" name="marca" value="{{ form.instance.marca }}" class="w-full rounded-md border border-gray-100 shadow-sm" required>
             </div>
-
+            <div class="pr-4">
+                <label for="id_precio" class="edit-label pb-2 block">Precio</label>
+                <input type="number" id="id_precio" name="precio" value="{{ form.instance.precio }}" class="w-full rounded-md border border-gray-100 shadow-sm" step="0.25" required>
+            </div>
             <div>
-                <label for="id_nombre" class="block text-sm font-medium text-[#75735A]">Nombre del Producto:</label>
-                <input type="text" id="id_nombre" name="nombre" value="{{ form.instance.nombre }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-[#69620e] focus:border-[#69620e]" required>
+                <label for="id_stock" class="edit-label pb-2 block">Stock</label>
+                <input type="number" id="id_stock" name="stock" value="{{ form.instance.stock }}" class="w-full rounded-md border border-gray-100 shadow-sm" required>
             </div>
-
-            <div>
-                <label for="id_descripcion" class="block text-sm font-medium text-[#75735A]">Descripción:</label>
-                <textarea id="id_descripcion" name="descripcion" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-[#69620e] focus:border-[#69620e]" rows="3" required>{{ form.instance.descripcion }}</textarea>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                    <label for="id_marca" class="block text-sm font-medium text-[#75735A]">Marca:</label>
-                    <input type="text" id="id_marca" name="marca" value="{{ form.instance.marca }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-[#69620e] focus:border-[#69620e]" required>
-                </div>
-
-                <div>
-                    <label for="id_precio" class="block text-sm font-medium text-[#75735A]">Precio:</label>
-                    <input type="number" id="id_precio" name="precio" value="{{ form.instance.precio }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-[#69620e] focus:border-[#69620e]" step="0.25" required>
-                </div>
-
-                <div>
-                    <label for="id_stock" class="block text-sm font-medium text-[#75735A]">Stock:</label>
-                    <input type="number" id="id_stock" name="stock" value="{{ form.instance.stock }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-[#69620e] focus:border-[#69620e]" required>
-                </div>
-            </div>
-
-            <div>
-                <label for="id_imagen" class="block text-sm font-medium text-[#75735A]">Imagen:</label>
-                <input type="file" id="id_imagen" name="imagen" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#69620e] file:text-white hover:file:bg-[#75735A]">
+        </div>
+        <div class="flex product-image-chooser">
+            <label for="id_imagen" class="edit-label">Imagen</label>
+            <div class="flex justify-between">
+                <input type="file" id="id_imagen" name="imagen" class="btn width-50">
                 {% if form.instance.imagen %}
-                    <img src="{{ form.instance.imagen.url }}" alt="Imagen del producto" class="mt-4 h-32 object-cover rounded-lg shadow">
+                    <img src="{{ form.instance.imagen.url }}" alt="Imagen del producto" class="float-right w-20">
                 {% endif %}
             </div>
+        </div>
 
-            <div>
-                <button type="submit" class="w-full bg-gradient-to-r from-[#69620e] to-[#75735A] text-white py-3 px-4 rounded-md hover:from-[#75735A] hover:to-[#69620e] transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#69620e]">
-                    {% if editing %}Actualizar{% else %}Guardar{% endif %} Producto
-                </button>
-            </div>
-        </form>
-    </section>
+        <hr class="my-8">
+        
+        <button type="submit" class="btn width-50 margin-left-auto">
+            {% if editing %}Actualizar{% else %}Guardar{% endif %} producto
+        </button>
+    </form>
+
 
     <!-- Script para la actualización de las subcategorías -->
     <script>
@@ -114,5 +106,5 @@
             });
         });
     </script>
-</main>
+</div>
 {% endblock %}

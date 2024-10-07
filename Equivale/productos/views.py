@@ -85,11 +85,17 @@ def pagina_principal(request):
         productos = paginator.page(1)
     except EmptyPage:
         productos = paginator.page(paginator.num_pages)
+        
+    if request.user.is_authenticated:
+        first_word_user = request.user.nombre.split()[0].capitalize()
+    else:
+        first_word_user = 'Invitado'
 
     context = {
         'productos': productos,
         'categorias': categorias,
         'subcategorias': Categoria.objects.filter(categoria_padre_id=filtros['categoria_id']) if filtros['categoria_id'] else [],
+        'nombre': first_word_user,
         **filtros,
         'orden': orden
     }
