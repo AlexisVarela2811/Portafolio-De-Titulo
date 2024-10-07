@@ -2,116 +2,124 @@
 {% load static %}
 
 {% block content %}
-<div class="container mx-auto mt-6 p-4 bg-white shadow-md rounded-lg">
-    <h2 class="text-3xl font-bold text-[#69620e]">Mi Carrito</h2>
+<div class="container main-content w-100">
+    <h2 class="mb-8">Mi carrito</h2>
     {% if carrito_items %}
-        <table class="min-w-full bg-gray-100 rounded-lg shadow-lg mt-4">
-            <thead class="bg-[#69620e] text-white">
-                <tr>
-                    <th class="py-3 px-4 text-left">ID</th>
-                    <th class="py-3 px-4 text-left">Producto</th>
-                    <th class="py-3 px-4 text-left">Precio</th>
-                    <th class="py-3 px-4 text-left">Cantidad</th>
-                    <th class="py-3 px-4 text-left">Total</th>
-                    <th class="py-3 px-4 text-left">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for cp in carrito_items %}
-                    <tr class="border-b hover:bg-gray-200">
-                        <td class="py-2 px-4">{{ cp.id }}</td>
-                        <td class="py-2 px-4">{{ cp.producto.nombre }}</td>
-                        <td class="py-2 px-4">${{ cp.producto.precio }}</td>
-                        <td class="py-2 px-4">
-                            <form action="{% url 'productos:actualizar_cantidad' cp.id %}" method="post" class="inline-block actualizar-cantidad-form">
-                                {% csrf_token %}
-                                <div class="flex items-center space-x-2">
-                                    <button class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-1 px-2 rounded btn-decrease" type="button" data-id="{{ cp.id }}">-</button>
-                                    <input type="number" class="border border-gray-400 rounded text-center cantidad-input w-16" name="cantidad" value="{{ cp.cantidad }}" disabled>
-                                    <button class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-1 px-2 rounded btn-increase" type="button" data-id="{{ cp.id }}">+</button>
-                                </div>
-                            </form>
-                        </td>
-                        <td class="py-2 px-4 total-producto" data-id="{{ cp.id }}">$<span id="total-producto-{{ cp.id }}">{{ cp.total_producto }}</span></td>
-                        <td class="py-2 px-4">
-                            <form action="{% url 'productos:eliminar_item_carrito' cp.id %}" method="post" class="inline-block">
-                                {% csrf_token %}
-                                <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded btn-danger">Eliminar</button>
-                            </form>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        
-        <div class="mt-6">
-            <h4 class="text-xl font-semibold text-[#69620e]">Método de Entrega</h4>
-            <form id="form-generar-pedido" method="post" action="{% url 'productos:generar_pedido'%}" class="bg-white p-4 rounded-lg shadow-md mt-2">
-                {% csrf_token %}
-                <div class="mb-4">
-                    <label for="metodo_entrega" class="block text-sm font-medium text-gray-700">Seleccionar Método de Entrega</label>
-                    <select class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" name="metodo_entrega" id="metodo_entrega">
-                        {% for metodo in metodos_entrega %}
-                            <option value="{{ metodo.id }}" data-costo="{{ metodo.costo }}">
-                                {{ metodo.nombre }} - {{ metodo.tiempo_estimado }} días - ${{ metodo.costo }} - {{ metodo.descripcion }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <h4 class="text-xl font-semibold text-[#69620e]">Opciones de Donación</h4>
-                <div class="mb-4">
-                    <label for="porcentaje_donacion" class="block text-sm font-medium text-gray-700">Porcentaje de Donación</label>
-                    <select class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" name="porcentaje_donacion" id="porcentaje_donacion">
-                        <option value="0" {% if porcentaje_donacion == 0 %}selected{% endif %}>0%</option>
-                        <option value="5" {% if porcentaje_donacion == 5 %}selected{% endif %}>5%</option>
-                        <option value="10" {% if porcentaje_donacion == 10 %}selected{% endif %}>10%</option>
-                        <option value="15" {% if porcentaje_donacion == 15 %}selected{% endif %}>15%</option>
-                    </select>
-                </div>
-
-                <label for="causa_ambiental" class="block text-sm font-medium text-gray-700">Selecciona una causa ambiental</label>
-                <select name="causa_ambiental" id="causa_ambiental" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                    <option value="">-- Selecciona una causa --</option>
-                    {% for causa in causas_ambientales %}
-                        <option value="{{ causa.id }}" {% if causa.id == selected_causa_ambiental.id %}selected{% endif %}>
-                            {{ causa.nombre }}
-                        </option>
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead>
+            <tr>
+                <th class="py-3 px-4 text-left">ID</th>
+                <th class="py-3 px-4 text-left">Producto</th>
+                <th class="py-3 px-4 text-left">Precio</th>
+                <th class="py-3 px-4 text-left">Cantidad</th>
+                <th class="py-3 px-4 text-left">Total</th>
+                <th class="py-3 px-4 text-left">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cp in carrito_items %}
+            <tr class="border-b hover:bg-gray-200">
+                <td class="py-2 px-4">{{ cp.id }}</td>
+                <td class="py-2 px-4">{{ cp.producto.nombre }}</td>
+                <td class="py-2 px-4">${{ cp.producto.precio|floatformat:0 }}</td>
+                <td class="py-2 px-4">
+                    <form action="{% url 'productos:actualizar_cantidad' cp.id %}" method="post" class="inline-block actualizar-cantidad-form">
+                        {% csrf_token %}
+                        <div class="flex items-center space-x-2">
+                            <button class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-1 px-2 rounded btn-decrease" type="button" data-id="{{ cp.id }}">-</button>
+                            <input type="number" class="border border-gray-400 rounded text-center cantidad-input w-16" name="cantidad" value="{{ cp.cantidad }}" disabled>
+                            <button class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-1 px-2 rounded btn-increase" type="button" data-id="{{ cp.id }}">+</button>
+                        </div>
+                    </form>
+                </td>
+                <td class="py-2 px-4 total-producto" data-id="{{ cp.id }}">$<span id="total-producto-{{ cp.id }}">{{ cp.total_producto }}</span></td>
+                <td class="py-2 px-4">
+                    <form action="{% url 'productos:eliminar_item_carrito' cp.id %}" method="post" class="inline-block">
+                        {% csrf_token %}
+                        <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded btn-danger">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <hr class="my-8">
+    <div>
+        <h2 class="mb-8">Método de entrega</h2>
+        <form id="form-generar-pedido" method="post" action="{% url 'productos:generar_pedido'%}">
+            {% csrf_token %}
+            <div class="mb-4 flex items-center">
+                <label for="metodo_entrega" class="edit-label">Seleccionar Método de Entrega</label>
+                <select class="rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" name="metodo_entrega" id="metodo_entrega">
+                    {% for metodo in metodos_entrega %}
+                    <option value="{{ metodo.id }}" data-costo="{{ metodo.costo }}">
+                        {{ metodo.nombre }} - {{ metodo.tiempo_estimado }} días - ${{ metodo.costo }} - {{ metodo.descripcion }}
+                    </option>
                     {% endfor %}
                 </select>
+            </div>
 
-                <h4 class="text-xl font-semibold text-[#69620e]">Tipos de Árboles (Opcional)</h4>
-                <div class="mb-4">
-                    <label for="tipo_arbol" class="block text-sm font-medium text-gray-700">Seleccionar Tipo de Árbol</label>
+            <hr class="my-8">
+            
+            <h2>Opciones de Donación</h2>
+            <div class="flex items-center">
+                <label for="porcentaje_donacion" class="edit-label">Porcentaje de Donación</label>
+                <select class="rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" name="porcentaje_donacion" id="porcentaje_donacion  ">
+                    <option value="0" {% if porcentaje_donacion == 0 %}selected{% endif %}>0%</option>
+                    <option value="5" {% if porcentaje_donacion == 5 %}selected{% endif %}>5%</option>
+                    <option value="10" {% if porcentaje_donacion == 10 %}selected{% endif %}>10%</option>
+                    <option value="15" {% if porcentaje_donacion == 15 %}selected{% endif %}>15%</option>
+                </select>
+            </div>
 
-                    <select class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" name="tipo_arbol" id="tipo_arbol">
-                        <option value="">No Apadrinar</option> 
-                        {% for arbol in tipos_arbol %}
-                            <option value="{{ arbol.id }}" data-costo="{{ arbol.costo }}" {% if arbol.id == selected_arbol %}selected{% endif %}>
-                                {{ arbol.nombre }} - ${{ arbol.costo }} - {{ arbol.descripcion }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
+                <hr class="my-8">
+            <div class="flex items-center">
+            <label for="causa_ambiental" class="edit-label">Selecciona una causa ambiental</label>
+            <select name="causa_ambiental" id="causa_ambiental" class="rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                <option value="">-- Selecciona una causa --</option>
+                {% for causa in causas_ambientales %}
+                <option value="{{ causa.id }}" {% if causa.id == selected_causa_ambiental.id %}selected{% endif %}>
+                {{ causa.nombre }}
+            </option>
+                {% endfor %}
+            </select>
+        </div>
+        <hr class="my-8">
+            
+            <h2 class="mb-4">Tipos de Árboles (Opcional)</h2>
+            <div class="mb-4 flex items-center">
+                <label for="tipo_arbol" class="edit-label">Seleccionar Tipo de Árbol</label>
+                <select class="rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" name="tipo_arbol" id="tipo_arbol">
+                    <option value="">No Apadrinar</option> 
+                    {% for arbol in tipos_arbol %}
+                    <option value="{{ arbol.id }}" data-costo="{{ arbol.costo }}" {% if arbol.id == selected_arbol %}selected{% endif %}>
+                        {{ arbol.nombre }} - ${{ arbol.costo }} - {{ arbol.descripcion }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
 
-                <h2 class="text-xl font-bold text-[#69620e]">Total Carrito: $<span id="total_carrito">{{ total_carrito }}</span></h2>
-                <h4 class="text-lg font-semibold text-[#69620e]">Total Envío:$<span id="costo_envio">{{ costo_envio }}</span></h4>
-                <h3 class="text-lg font-semibold text-[#69620e]">Total Donación: $<span id="total_donacion">{{ total_donacion }}</span></h3>
-                <h4 id="costo_arbol_section" class="text-lg font-semibold text-[#69620e] hidden">Costo del Árbol: <span id="costo_arbol">{{ costo_arbol }}</span></h4>
-                <h5 class="text-lg font-semibold text-[#69620e]">Total Final (Carrito + Árbol + Envío): $<span id="total_con_arbol">{{ total_con_arbol }}</span></h5>
-
-                <!-- Datos ocultos que enviarán la información al backend -->
-                <input type="hidden" name="total_final" value="{{ total_final }}">
-                <input type="hidden" name="porcentaje_donacion" value="{{ porcentaje_donacion }}">
-                <input type="hidden" name="tipo_arbol" value="{{ tipo_arbol_id }}">
-                <input type="hidden" name="causa_ambiental" value="{{ causa_ambiental_id }}">
-
-                <button type="submit" class="mt-4 w-full bg-[#69620e] hover:bg-[#75735A] text-white font-bold py-2 px-4 rounded">Finalizar Compra</button>
+            <hr class="my-8">
+            
+            <h3 class="mb-4">Total de carrito: $<span id="total_carrito">{{ total_carrito }}</span></h3>
+            <h3 class="mb-4">Total de envío:$<span id="costo_envio">{{ costo_envio }}</span></h3>
+            <h3 class="mb-4">Total de donación: $<span id="total_donacion">{{ total_donacion }}</span></h3>
+            <h3 id="costo_arbol_section" class="mb-4 hidden">Costo de árbol: <span id="costo_arbol">{{ costo_arbol }}</span></h3>
+            <hr class="my-8">
+            <h2 class="mb-8">Total final: $<span id="total_con_arbol">{{ total_con_arbol }}</span></h2>
+            
+            <!-- Datos ocultos que enviarán la información al backend -->
+             <input type="hidden" name="total_final" value="{{ total_final }}">
+             <input type="hidden" name="porcentaje_donacion" value="{{ porcentaje_donacion }}">
+             <input type="hidden" name="tipo_arbol" value="{{ tipo_arbol_id }}">
+             <input type="hidden" name="causa_ambiental" value="{{ causa_ambiental_id }}">
+             <button type="submit" class="btn width-50 margin-left-auto">Finalizar compra</button>
             </form>
         </div>
-    {% else %}
-        <p class="text-center text-gray-500">Tu carrito está vacío.</p>
-    {% endif %}
+        {% else %}
+        <p class="text-center">Tu carrito está vacío.</p>
+        {% endif %}
+    </div>
 </div>
 
 <script>

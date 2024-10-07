@@ -5,10 +5,10 @@
 {% block content %}
 <div id="pagina-principal" class="flex flex-col md:flex-row">
     <!-- Filtro por Categoría -->
-    <div class="main-filtro w-full md:w-1/4 p-4">
+    <div class="main-filtro main-content">
         <form method="get" action="{% url 'productos:pagina_principal' %}">
             <div class="mb-4">
-                <h3 class="pb-3">Categorías</h3>
+                <h3 class="pb-3">Selecciona tu categoría</h3>
                 <ul class="category-selector">
                     {% for categoria in categorias %}
                         <li>
@@ -21,7 +21,7 @@
 
             <!-- Filtro por Precios -->
             <div class="mb-4">
-                <h3 class="pb-2">Precio</h3>
+                <h3 class="pb-2">Filtra por precio</h3>
                 <div class="flex justify-between">
                     <label for="precio_min" class="flex items-center">Desde</label>
                     <input type="number" class="filtro-precio ml-2 py-1" id="precio_min" name="precio_min" value="{{ precio_min }}" placeholder="0">
@@ -67,12 +67,17 @@
     <div class="flex-grow pl-4">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             {% for producto in productos %}
-                <div class="flex flex-col items-center justify-center p-3 relative shadow-lg transition-all duration-300">
-                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="w-32 h-32 object-cover rounded-full mb-2">
-                    <p class="font-semibold text-black tracking-wider text-lg">{{ producto.nombre }}</p>
-                    <p class="font-semibold text-gray-600 text-xs">{{ producto.descripcion }}</p>
-                    <div class="flex flex-col justify-between items-center w-full mt-2">
-                        <p class="text-black font-semibold">${{ producto.precio }}</p>
+            <!-- producto -->
+                <div class="flex flex-col relative transition-all duration-300 product">
+                    <p class="pill">{{ producto.categoria }}</p>
+                    <div class="product-image-container">
+                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="product-image">
+                    </div>
+                    <div class="product-content py-4 pb-4">
+                        <h4 class="product-title pb-4">{{ producto.nombre }}</h4>
+                        <p class="product-description pb-4">{{ producto.descripcion }}</p>
+                        <div class="flex flex-col justify-between items-center w-full mt-2">
+                            <p class="text-black font-semibold">${{ producto.precio|floatformat:0 }}</p>
                         {% if user.is_authenticated %}
                             <form action="{% url 'productos:agregar_carrito' producto.id %}" method="post" class="w-full">
                                 {% csrf_token %}
@@ -81,13 +86,9 @@
                         {% else %}
                             <a href="{% url 'cuentas:login' %}" class="btn">Agregar al Carrito</a>
                         {% endif %}
+                        <p class="product-stock w-100 text-center">{{ producto.stock }} unidades restantes</p>
                     </div>
-                    <ul class="mt-2 text-sm text-gray-600">
-                        <li>Categoría: {{ producto.categoria }}</li>
-                        <li>Subcategoria: {{ producto.subcategoria }}</li>
-                        <li>Marca: {{ producto.marca }}</li>
-                        <li>Stock: {{ producto.stock }}</li>
-                    </ul>
+                    </div>
                 </div>
             {% empty %} 
                 <div class="col-12">
