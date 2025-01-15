@@ -22,13 +22,13 @@ Utilizaremos una buena arquitectura para facilitar su desarrollo. Además, hemos
 ## Instalación
 1. Clona el repositorio:
    ```bash
-   git clone <URL_DEL_REPOSITORIO>
+   git clone https://github.com/AlexisVarela2811/Portafolio-De-Titulo.git
    cd Equivale
    ```
 2. Crea y activa un entorno virtual:
    ```bash
    python -m venv venv
-   .\venv\Scripts\activate  # Para Windows
+   .\venv\Scripts\activate
    ```
 3. Instala las dependencias:
    ```bash
