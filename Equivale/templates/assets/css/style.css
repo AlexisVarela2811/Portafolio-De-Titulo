@@ -132,8 +132,8 @@ nav#main-nav {
 }
 
 .main-nav-search {
-    padding-top:.25em;
-    padding-bottom: .25em;
+    padding-top:20px;
+    padding-bottom:20px;
 }
 
 .main-nav-search input {

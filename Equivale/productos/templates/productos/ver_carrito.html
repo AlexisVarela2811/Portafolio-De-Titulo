@@ -64,7 +64,7 @@
             <h2>Opciones de Donación</h2>
             <div class="flex items-center">
                 <label for="porcentaje_donacion" class="edit-label">Porcentaje de Donación</label>
-                <select class="rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" name="porcentaje_donacion" id="porcentaje_donacion  ">
+                <select class="rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" name="porcentaje_donacion" id="porcentaje_donacion">
                     <option value="0" {% if porcentaje_donacion == 0 %}selected{% endif %}>0%</option>
                     <option value="5" {% if porcentaje_donacion == 5 %}selected{% endif %}>5%</option>
                     <option value="10" {% if porcentaje_donacion == 10 %}selected{% endif %}>10%</option>
@@ -101,7 +101,7 @@
 
             <hr class="my-8">
             
-            <h3 class="mb-4">Total de carrito: $<span id="total_carrito">{{ total_carrito }}</span></h3>
+            <h3 class="mb-4">Total de carrito: $<span id="total_carrito">{{ total_carrito|floatformat:0 }}</span></h3>
             <h3 class="mb-4">Total de envío:$<span id="costo_envio">{{ costo_envio }}</span></h3>
             <h3 class="mb-4">Total de donación: $<span id="total_donacion">{{ total_donacion }}</span></h3>
             <h3 id="costo_arbol_section" class="mb-4 hidden">Costo de árbol: <span id="costo_arbol">{{ costo_arbol }}</span></h3>
@@ -180,11 +180,11 @@
                 if (data.success) {
                     const totalProductoElement = document.querySelector(`.total-producto[data-id="${data.item_id}"]`);
                     if (totalProductoElement) {
-                        totalProductoElement.textContent = `$${parseFloat(data.nuevo_total_producto).toFixed(2)}`;
+                        totalProductoElement.textContent = `$${parseInt(data.nuevo_total_producto, 10)}`;
                     }
-                    const nuevoTotalCarrito = parseFloat(data.nuevo_total_carrito);
+                    const nuevoTotalCarrito = parseInt(data.nuevo_total_carrito, 10);
                     if (!isNaN(nuevoTotalCarrito)) {
-                        totalCarritoSpan.textContent = nuevoTotalCarrito.toFixed(2);
+                        totalCarritoSpan.textContent = nuevoTotalCarrito; // Sin decimales
                         calcularTotal(); 
                     }
                 }
@@ -193,48 +193,47 @@
         }
 
         function calcularTotal() {
-            const totalCarrito = parseFloat(totalCarritoSpan.textContent);
-            const porcentajeDonacion = parseFloat(porcentajeDonacionSelect.value);
+            const totalCarrito = parseInt(totalCarritoSpan.textContent, 10);
+            const porcentajeDonacion = parseInt(porcentajeDonacionSelect.value, 10);
             const totalDonacion = calcularDonacion(totalCarrito, porcentajeDonacion);
-            totalDonacionSpan.textContent = totalDonacion.toFixed(2);
+            totalDonacionSpan.textContent = totalDonacion; // Sin decimales
 
             const costoArbol = obtenerCostoArbolSeleccionado();
             actualizarSeccionArbol(costoArbol);
 
             const costoEnvio = obtenerCostoEnvioSeleccionado();
-            costoEnvioSpan.textContent = costoEnvio.toFixed(2);
+            costoEnvioSpan.textContent = costoEnvio; // Sin decimales
 
             const totalConArbol = totalCarrito + costoArbol + costoEnvio;
-            totalConArbolSpan.textContent = totalConArbol.toFixed(2);
+            totalConArbolSpan.textContent = totalConArbol; // Sin decimales
 
-            document.querySelector('input[name="total_final"]').value = totalConArbol.toFixed(2);
+            document.querySelector('input[name="total_final"]').value = totalConArbol; // Sin decimales
             document.querySelector('input[name="porcentaje_donacion"]').value = porcentajeDonacion;
             document.querySelector('input[name="tipo_arbol"]').value = tipoArbolSelect.value;
             document.querySelector('input[name="causa_ambiental"]').value = document.getElementById('causa_ambiental').value;
         }
 
         function calcularDonacion(total, porcentaje) {
-            return total * (porcentaje / 100);
+            return Math.floor(total * (porcentaje / 100)); // Redondear hacia abajo
         }
 
         function obtenerCostoArbolSeleccionado() {
             const arbolSeleccionado = tipoArbolSelect.options[tipoArbolSelect.selectedIndex];
-            return arbolSeleccionado.value !== "" ? parseFloat(arbolSeleccionado.getAttribute('data-costo')) : 0;
+            return arbolSeleccionado.value !== "" ? parseInt(arbolSeleccionado.getAttribute('data-costo'), 10) : 0;
         }
 
         function obtenerCostoEnvioSeleccionado() {
             const metodoSeleccionado = metodoEntregaSelect.options[metodoEntregaSelect.selectedIndex];
-            return metodoSeleccionado ? parseFloat(metodoSeleccionado.getAttribute('data-costo')) : 0;
+            return metodoSeleccionado ? parseInt(metodoSeleccionado.getAttribute('data-costo'), 10) : 0;
         }
         
-
         function actualizarSeccionArbol(costoArbol) {
             if (costoArbol > 0) {
                 costoArbolSection.style.display = "block";
             } else {
                 costoArbolSection.style.display = "none";
             }
-            costoArbolSpan.textContent = costoArbol.toFixed(2);
+            costoArbolSpan.textContent = costoArbol; // Sin decimales
         }
         
         function enviarCantidadAlBackend(form, nuevaCantidad) {
@@ -249,18 +248,16 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Actualizar el total en la tabla si es necesario
                     const totalProducto = form.closest('tr').querySelector('.total-producto');
-                    totalProducto.querySelector('span').textContent = data.total_producto;
+                    totalProducto.querySelector('span').textContent = data.total_producto; // Sin decimales
                     
-                    // Actualizar el total carrito, envío y donación si es necesario
-                    document.getElementById('total_carrito').textContent = data.total_carrito;
-                    document.getElementById('total_donacion').textContent = data.total_donacion;
-                    document.getElementById('total_con_arbol').textContent = data.total_final;
+                    document.getElementById('total_carrito').textContent = data.total_carrito; // Sin decimales
+                    document.getElementById('total_donacion').textContent = data.total_donacion; // Sin decimales
+                    document.getElementById('total_con_arbol').textContent = data.total_final; // Sin decimales
                     
                     if (data.costo_arbol) {
                         document.getElementById('costo_arbol_section').classList.remove('hidden');
-                        document.getElementById('costo_arbol').textContent = data.costo_arbol;
+                        document.getElementById('costo_arbol').textContent = data.costo_arbol; // Sin decimales
                     } else {
                         document.getElementById('costo_arbol_section').classList.add('hidden');
                     }
@@ -272,5 +269,6 @@
         }
     });
 </script>
+
 
 {% endblock %}
